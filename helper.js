@@ -69,6 +69,14 @@ function calculatePubPointer(pointer){
     return 'point'+pointer;
 }
 
+function generateRecipientPointerAddr(token_class_id, sign_alg, hash_alg, secret, nonce){
+    return calculatePubPointer(calculatePointer({token_class_id, sign_alg, hash_alg, secret, nonce}));
+}
+
+function generateRecipientPubkeyAddr(secret){
+    return calculatePubAddr(calculatePubkey(secret));
+}
+
 async function calculateGenesisRequestId(tokenId){
     const minterSigner = getMinterSigner(tokenId);
     const minterPubkey = await minterSigner.getPubKey();
@@ -207,6 +215,8 @@ module.exports = {
     calculatePubAddr,
     calculatePubPointer,
     calculatePubkey,
+    generateRecipientPointerAddr,
+    generateRecipientPubkeyAddr,
     resolveReference,
     confirmOwnership,
     getMinterSigner,
