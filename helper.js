@@ -1,10 +1,11 @@
 "use strict";
 const objectHash = require("object-hash");
 const { NOT_INCLUDED } = require("./constants.js");
+const { bigIntToWordArray, stringToWordArray } = require("@unicitylabs/utils");
 //const CryptoJS = require('crypto-js');
 const { hash } = require("./hasher/sha256hasher.js").SHA256Hasher;
-const { SignerEC } = require("./signer/SignerEC.js");
-const { UnicityProvider } = require('./provider/UnicityProvider.js');
+const { getMinterSigner, getTxSigner, verify } = require("./signer/SignerEC.js");
+const { getMinterProvider, verifyInclusionProofs } = require("./provider/UnicityProvider.js");
 
 const CryptoJS = require('crypto-js');
 
@@ -46,7 +47,7 @@ function calculatePointerFromPubKey({token_class_id, sign_alg, hash_alg, secret,
 }
 
 function calculateExpectedPointerFromPubAddr({token_class_id, sign_alg, hash_alg, pubkey, salt, signature, nonce, sourceState}){
-    if(!SignerEC.verify(pubkey, salt, signature))
+    if(!verify(pubkey, salt, signature))
 	throw new Error("Salt was not signed correctly");
 
     const signAlgCode = hash(sign_alg);
@@ -77,11 +78,15 @@ function generateRecipientPubkeyAddr(secret){
     return calculatePubAddr(calculatePubkey(secret));
 }
 
+function calculateRequestId(hash, pubKey, state){
+    return hash(pubKey+state);
+}
+
 async function calculateGenesisRequestId(tokenId){
     const minterSigner = getMinterSigner(tokenId);
-    const minterPubkey = await minterSigner.getPubKey();
+    const minterPubkey = minterSigner.getPubKey();
     const genesisState = calculateGenesisStateHash(tokenId);
-    return await UnicityProvider.calculateRequestId(minterPubkey, genesisState);
+    return calculateRequestId(hash, minterPubkey, genesisState);
 }
 
 function calculateMintPayload(tokenId, tokenClass, tokenValue, dataHash, destPointer, salt){
@@ -99,21 +104,6 @@ function resolveReference(dest_ref){
     if(dest_ref.startsWith('pub'))
 	return { pubkey: dest_ref.substring(3) };
     return dest_ref;
-}
-
-function getMinterSigner(tokenId){
-    return new SignerEC(hash(MINTER_SECRET+tokenId));
-}
-
-function getMinterProvider(transport, tokenId){
-    const signer = getMinterSigner(tokenId);
-    return new UnicityProvider(transport, signer, hash);
-}
-
-function getTxSigner(secret, nonce){ // Changed
-    if(nonce)return new SignerEC(hash(secret+nonce));
-    else
-	return new SignerEC(hash(secret));
 }
 
 async function isUnspent(provider, state){
@@ -222,6 +212,7 @@ module.exports = {
     getMinterSigner,
     getMinterProvider,
     getTxSigner,
+    verifyInclusionProofs,
     getPubKey,
     isUnspent,
     getStdin,

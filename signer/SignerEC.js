@@ -9,14 +9,6 @@ class SignerEC {
         this.publicKey = ec.keyFromPrivate(this.privateKey).getPublic('hex');
     }
 
-    static generatePrivateKey() {
-        let privateKey;
-        do {
-            privateKey = CryptoJS.lib.WordArray.random(32).toString(CryptoJS.enc.Hex);
-        } while (!secp256k1.privateKeyVerify(privateKey));
-        return privateKey.toString('hex');
-    }
-
     sign(messageHex) {
         const messageBuffer = Buffer.from(messageHex, 'hex');
         if (messageBuffer.length !== 32) {
@@ -25,17 +17,6 @@ class SignerEC {
 	return this.privateKey.sign(messageBuffer).toDER('hex');
     }
 
-    static verify(pubKeyHex, messageHex, signatureHex) {
-        const pubKey = ec.keyFromPublic(pubKeyHex, 'hex') ;
-        const messageBuffer = Buffer.from(messageHex, 'hex');
-        const signature = Buffer.from(signatureHex, 'hex');
-        
-        if (messageBuffer.length !== 32) {
-            throw new Error('Message must be 32 bytes in length');
-        }
-
-	return pubKey.verify(messageBuffer, signature);
-    }
 
     getPubKey(){
 	return this.publicKey;
@@ -46,4 +27,35 @@ class SignerEC {
     }
 }
 
-module.exports = { SignerEC }
+function getMinterSigner(tokenId){
+	return new SignerEC(hash(MINTER_SECRET+tokenId));
+}
+
+function getTxSigner(secret, nonce){
+	if(nonce)return new SignerEC(hash(secret+nonce));
+	    else
+	return new SignerEC(hash(secret));
+}
+
+function generatePrivateKey() {
+        let privateKey;
+        do {
+            privateKey = CryptoJS.lib.WordArray.random(32).toString(CryptoJS.enc.Hex);
+        } while (!secp256k1.privateKeyVerify(privateKey));
+        return privateKey.toString('hex');
+}
+
+function verify(pubKeyHex, messageHex, signatureHex) {
+        const pubKey = ec.keyFromPublic(pubKeyHex, 'hex') ;
+        const messageBuffer = Buffer.from(messageHex, 'hex');
+        const signature = Buffer.from(signatureHex, 'hex');
+        
+        if (messageBuffer.length !== 32) {
+            throw new Error('Message must be 32 bytes in length');
+        }
+
+	return pubKey.verify(messageBuffer, signature);
+}
+
+
+module.exports = { SignerEC, getMinterSigner, getTxSigner, generatePrivateKey, verify }

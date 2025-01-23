@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/unicitynetwork/shared#readme",
   "dependencies": {
+    "@unicitylabs/utils": "^1.0.0",
     "axios": "^1.7.9",
     "crypto-js": "^4.2.0",
     "elliptic": "^6.6.1",
