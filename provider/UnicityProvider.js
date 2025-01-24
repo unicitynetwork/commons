@@ -3,7 +3,7 @@ const { wordArrayToHex, hexToWordArray, isWordArray, smthash } = require("@unici
 const { verifyPath, includesPath } = require('@unicitylabs/prefix-hash-tree');
 
 const { AggregatorAPI } = require('../api/api.js');
-const { SignerEC, verify } = require('../signer/SignerEC.js');
+const { SignerEC, verify, getMinterSigner, getTxSigner } = require('../signer/SignerEC.js');
 const { hash } = require('../hasher/sha256hasher.js').SHA256Hasher;
 const { SHA256Hasher } = require('../hasher/sha256hasher.js');
 
@@ -25,7 +25,7 @@ class UnicityProvider{
     }
 
     async getRequestId(sourceStateHash){
-	return UnicityProvider.calculateRequestId(await this.signer.getPubKey(), sourceStateHash, this.hasher);
+	return calculateRequestId(hash, await this.signer.getPubKey(), sourceStateHash);
     }
 
     async getAuthenticator(sourceStateHash, transitionHash){
@@ -41,9 +41,116 @@ class UnicityProvider{
 }
 
 function getMinterProvider(transport, tokenId){
-	const signer = SignerEC.getMinterSigner(tokenId);
+	const signer = getMinterSigner(tokenId);
 	return new UnicityProvider(transport, signer, hash);
 }
+
+const MINT_SUFFIX_HEX = hash('TOKENID');
+const MINTER_SECRET = 'I_AM_UNIVERSAL_MINTER_FOR_';
+
+function calculateGenesisStateHash(tokenId){
+    return hash(tokenId+MINT_SUFFIX_HEX);
+}
+
+function calculateStateHash({token_class_id, token_id, sign_alg, hash_alg, data, pubkey, nonce}){
+    const signAlgCode = hash(sign_alg);
+    const hashAlgCode = hash(hash_alg);
+    return hash(token_class_id+signAlgCode+token_id+hashAlgCode+(data?hash(data):'')+pubkey+nonce);
+}
+
+function calculatePointer({token_class_id, sign_alg, hash_alg, secret, nonce}){
+    const signer = getTxSigner(secret, nonce);
+    const pubkey = signer.publicKey;
+    const signAlgCode = hash(sign_alg);
+    const hashAlgCode = hash(hash_alg);
+    return hash(token_class_id+signAlgCode+hashAlgCode+pubkey+nonce);
+}
+
+function calculateExpectedPointer({token_class_id, sign_alg, hash_alg, pubkey, nonce}){
+    const signAlgCode = hash(sign_alg);
+    const hashAlgCode = hash(hash_alg);
+    return hash(token_class_id+signAlgCode+hashAlgCode+pubkey+nonce);
+}
+
+function calculatePointerFromPubKey({token_class_id, sign_alg, hash_alg, secret, salt, sourceState}){
+    const signer = getTxSigner(secret);
+    const pubkey = signer.publicKey;
+    const signAlgCode = hash(sign_alg);
+    const hashAlgCode = hash(hash_alg);
+    const signature = signer.sign(salt);
+    const nonce=hash(sourceState+signature);
+    return { pointer: hash(token_class_id+signAlgCode+hashAlgCode+pubkey+nonce), signature };
+}
+
+function calculateExpectedPointerFromPubAddr({token_class_id, sign_alg, hash_alg, pubkey, salt, signature, nonce, sourceState}){
+    if(!verify(pubkey, salt, signature))
+    throw new Error("Salt was not signed correctly");
+
+    const signAlgCode = hash(sign_alg);
+    const hashAlgCode = hash(hash_alg);
+    if(hash(sourceState+signature) !== nonce)
+    throw new Error("Nonce was not derived correctly");
+    return hash(token_class_id+signAlgCode+hashAlgCode+pubkey+nonce);
+}
+
+function calculatePubkey(secret){
+    const signer = getTxSigner(secret);
+    return signer.publicKey;
+}
+
+function calculatePubAddr(pubkey){
+    return 'pub'+pubkey;
+}
+
+function calculatePubPointer(pointer){
+    return 'point'+pointer;
+}
+
+function generateRecipientPointerAddr(token_class_id, sign_alg, hash_alg, secret, nonce){
+    return calculatePubPointer(calculatePointer({token_class_id, sign_alg, hash_alg, secret, nonce}));
+}
+
+function generateRecipientPubkeyAddr(secret){
+    return calculatePubAddr(calculatePubkey(secret));
+}
+
+function calculateRequestId(hash, pubKey, state){
+    return hash(pubKey+state);
+}
+
+async function calculateGenesisRequestId(tokenId){
+    const minterSigner = getMinterSigner(tokenId);
+    const minterPubkey = minterSigner.getPubKey();
+    const genesisState = calculateGenesisStateHash(tokenId);
+    return calculateRequestId(hash, minterPubkey, genesisState);
+}
+
+function calculateMintPayload(tokenId, tokenClass, tokenValue, dataHash, destPointer, salt){
+    const value = `${tokenValue.toString(16).slice(2).padStart(64, "0")}`;
+    return hash(tokenId+tokenClass+value+dataHash+destPointer+salt);
+}
+
+async function calculatePayload(source, destPointer, salt, dataHash){
+    return hash(source.calculateStateHash()+destPointer+salt+(dataHash?dataHash:''));
+}
+
+function resolveReference(dest_ref){
+    if(dest_ref.startsWith('point'))
+    return { pointer: dest_ref.substring(5) };
+    if(dest_ref.startsWith('pub'))
+    return { pubkey: dest_ref.substring(3) };
+    return dest_ref;
+}
+
+async function isUnspent(provider, state){
+    const { status, path } = await provider.extractProofs(await provider.getRequestId(state));
+    return status == NOT_INCLUDED;
+}
+
+async function confirmOwnership(token, signer){
+    return token.state.challenge.pubkey == signer.getPubKey();
+}
+
 
 function verifyInclusionProofs(path, requestId){
     if(!path) throw new Error("Internal error: malformed unicity response. No path field");
@@ -73,4 +180,30 @@ function deserializeHashPath(serializedPath){
     })};
 }
 
-module.exports = { UnicityProvider, getMinterProvider, verifyInclusionProofs, serializeHashPath, deserializeHashPath }
+module.exports = { 
+    UnicityProvider, 
+    getMinterProvider, 
+    verifyInclusionProofs, 
+    serializeHashPath, 
+    deserializeHashPath,
+    calculateGenesisStateHash,
+    calculateStateHash,
+    calculatePointer,
+    calculateExpectedPointer,
+    calculateGenesisRequestId,
+    calculateMintPayload,
+    calculatePayload,
+    calculateExpectedPointerFromPubAddr,
+    calculatePubAddr,
+    calculatePubPointer,
+    calculatePubkey,
+    generateRecipientPointerAddr,
+    generateRecipientPubkeyAddr,
+    resolveReference,
+    confirmOwnership,
+//    getMinterSigner,
+    getMinterProvider,
+    getTxSigner,
+    verifyInclusionProofs,
+    isUnspent
+ }

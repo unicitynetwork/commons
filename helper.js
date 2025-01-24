@@ -8,7 +8,7 @@ const { getMinterSigner, getTxSigner, verify } = require("./signer/SignerEC.js")
 const { getMinterProvider, verifyInclusionProofs } = require("./provider/UnicityProvider.js");
 
 const CryptoJS = require('crypto-js');
-
+/*
 const MINT_SUFFIX_HEX = hash('TOKENID');
 const MINTER_SECRET = 'I_AM_UNIVERSAL_MINTER_FOR_';
 
@@ -114,7 +114,7 @@ async function isUnspent(provider, state){
 async function confirmOwnership(token, signer){
     return token.state.challenge.pubkey == signer.getPubKey();
 }
-
+*/
 function getStdin(){
   return new Promise((resolve, reject) => {
     let inputData = '';
@@ -194,7 +194,7 @@ function generateRandom256BitHex() {
 }
 
 module.exports = {
-    calculateGenesisStateHash,
+/*    calculateGenesisStateHash,
     calculateStateHash,
     calculatePointer,
     calculateExpectedPointer,
@@ -214,7 +214,7 @@ module.exports = {
     getTxSigner,
     verifyInclusionProofs,
     getPubKey,
-    isUnspent,
+    isUnspent,*/
     getStdin,
     splitStdin,
     validateOrConvert,
