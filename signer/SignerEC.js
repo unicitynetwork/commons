@@ -1,7 +1,9 @@
 const CryptoJS = require('crypto-js');
 const elliptic = require('elliptic');
+const { hash } = require('../hasher/sha256hasher.js').SHA256Hasher;
 
 const ec=new elliptic.ec('secp256k1');
+
 
 class SignerEC {
     constructor(privateKeyHex) {
@@ -25,10 +27,6 @@ class SignerEC {
     static getAlg() {
 	return 'secp256k1';
     }
-}
-
-function getMinterSigner(tokenId){
-	return new SignerEC(hash(MINTER_SECRET+tokenId));
 }
 
 function getTxSigner(secret, nonce){
@@ -58,4 +56,4 @@ function verify(pubKeyHex, messageHex, signatureHex) {
 }
 
 
-module.exports = { SignerEC, getMinterSigner, getTxSigner, generatePrivateKey, verify }
+module.exports = { SignerEC, getTxSigner, generatePrivateKey, verify }

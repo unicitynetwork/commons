@@ -1,9 +1,11 @@
+const objectHash = require('object-hash');
+
 const { NODEL_FAILED, NOT_INCLUDED, NOT_MATCHING, NOT_AUTHENTICATED, WRONG_AUTH_TYPE, PATH_INVALID, OK } = require("../constants.js");
 const { wordArrayToHex, hexToWordArray, isWordArray, smthash } = require("@unicitylabs/utils");
 const { verifyPath, includesPath } = require('@unicitylabs/prefix-hash-tree');
 
 const { AggregatorAPI } = require('../api/api.js');
-const { SignerEC, verify, getMinterSigner, getTxSigner } = require('../signer/SignerEC.js');
+const { SignerEC, verify, getTxSigner } = require('../signer/SignerEC.js');
 const { hash } = require('../hasher/sha256hasher.js').SHA256Hasher;
 const { SHA256Hasher } = require('../hasher/sha256hasher.js');
 
@@ -38,6 +40,10 @@ class UnicityProvider{
 	};
     }
 
+}
+
+function getMinterSigner(tokenId){
+    return new SignerEC(hash(MINTER_SECRET+tokenId));
 }
 
 function getMinterProvider(transport, tokenId){
@@ -158,6 +164,7 @@ function verifyInclusionProofs(path, requestId){
     if(!leaf)return NOT_INCLUDED;
     if(!leaf.leaf)return NOT_INCLUDED;
     if(!verify(leaf.authenticator.pubkey, leaf.payload, leaf.authenticator.signature))return NOT_AUTHENTICATED;
+    if(BigInt('0x'+objectHash(path[path.length-1], {algorithm: 'sha256'})) !== BigInt(path[path.length-2]?.value))return NOT_INCLUDED;
     const unserializedPath = deserializeHashPath(path)?.path?.slice(0, -1);
     if(!verifyPath(smthash, unserializedPath))return PATH_INVALID;
     if(!includesPath(smthash, BigInt('0x'+requestId), unserializedPath))return NOT_INCLUDED;
@@ -197,6 +204,7 @@ module.exports = {
     calculatePubAddr,
     calculatePubPointer,
     calculatePubkey,
+    calculateRequestId,
     generateRecipientPointerAddr,
     generateRecipientPubkeyAddr,
     resolveReference,
@@ -205,5 +213,7 @@ module.exports = {
     getMinterProvider,
     getTxSigner,
     verifyInclusionProofs,
-    isUnspent
+    isUnspent,
+    MINT_SUFFIX_HEX,
+    MINTER_SECRET
  }
