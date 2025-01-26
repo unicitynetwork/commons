@@ -1,5 +1,4 @@
 "use strict";
-const objectHash = require("object-hash");
 const { NOT_INCLUDED } = require("./constants.js");
 const { bigIntToWordArray, stringToWordArray } = require("@unicitylabs/utils");
 //const CryptoJS = require('crypto-js');
