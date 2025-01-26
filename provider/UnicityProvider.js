@@ -1,5 +1,5 @@
 const { NODEL_FAILED, NOT_INCLUDED, NOT_MATCHING, NOT_AUTHENTICATED, WRONG_AUTH_TYPE, PATH_INVALID, OK } = require("../constants.js");
-const { wordArrayToHex, hexToWordArray, isWordArray, smthash } = require("@unicitylabs/utils");
+const { wordArrayToHex, hexToWordArray, isWordArray, isHexString, smthash } = require("@unicitylabs/utils");
 const { verifyPath, includesPath } = require('@unicitylabs/prefix-hash-tree');
 
 const { AggregatorAPI } = require('../api/api.js');
@@ -162,7 +162,7 @@ function verifyInclusionProofs(path, requestId){
     if(!leaf)return NOT_INCLUDED;
     if(!leaf.leaf)return NOT_INCLUDED;
     if(!verify(leaf.authenticator.pubkey, leaf.payload, leaf.authenticator.signature))return NOT_AUTHENTICATED;
-    if(BigInt('0x'+objectHash(path[path.length-1])) !== BigInt(path[path.length-2]?.value))return NOT_INCLUDED;
+    if(BigInt('0x'+objectHash(path[path.length-1])) !== BigInt('0x'+path[path.length-2]?.value))return NOT_INCLUDED;
     const unserializedPath = deserializeHashPath(path)?.path?.slice(0, -1);
     if(!verifyPath(smthash, unserializedPath))return PATH_INVALID;
     if(!includesPath(smthash, BigInt('0x'+requestId), unserializedPath))return NOT_INCLUDED;
@@ -172,7 +172,7 @@ function verifyInclusionProofs(path, requestId){
 function serializeHashPath(path, leaf){
     return {path: [...path.map((entry) => {return {prefix: entry.prefix?.toString(16), 
     covalue: wordArrayToHex(entry.covalue), value:isWordArray(entry.value)?
-    ('0x'+wordArrayToHex(entry.value)):(typeof entry.value === 'bigint')?
+    (wordArrayToHex(entry.value)):(typeof entry.value === 'bigint')?
     ('0x'+entry.value.toString(16)):entry.value};}), ...[leaf]]};
 }
 
@@ -180,7 +180,7 @@ function deserializeHashPath(serializedPath){
     return {path: serializedPath.map((entry) => {return entry.leaf?entry:{
         prefix: entry.prefix?BigInt('0x'+entry.prefix):undefined,
         covalue: entry.covalue?hexToWordArray(entry.covalue):undefined,
-        value: entry.value?.startsWith('0x')?hexToWordArray(entry.value):entry.value
+        value: entry.value?.startsWith('0x')?BigInt(entry.value):isHexString(entry.value)?hexToWordArray(entry.value):entry.value
     }
     })};
 }
