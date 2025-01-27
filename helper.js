@@ -212,8 +212,8 @@ module.exports = {
     getMinterProvider,
     getTxSigner,
     verifyInclusionProofs,
-    getPubKey,
     isUnspent,*/
+    getPubKey,
     getStdin,
     splitStdin,
     validateOrConvert,
