@@ -24,15 +24,15 @@ class UnicityProvider{
 	return { status: verifyInclusionProofs(path, requestId), path };
     }
 
-    async getRequestId(sourceStateHash){
-	return calculateRequestId(hash, await this.signer.getPubKey(), sourceStateHash);
+    getRequestId(sourceStateHash){
+	return calculateRequestId(hash, this.signer.getPubKey(), sourceStateHash);
     }
 
-    async getAuthenticator(sourceStateHash, transitionHash){
+    getAuthenticator(sourceStateHash, transitionHash){
 	return {
 	    state: sourceStateHash,
-	    pubkey: await this.signer.getPubKey(), 
-	    signature: await this.signer.sign(transitionHash), 
+	    pubkey: this.signer.getPubKey(), 
+	    signature: this.signer.sign(transitionHash), 
 	    sign_alg: SignerEC.getAlg(), 
 	    hash_alg: SHA256Hasher.getAlg()
 	};
@@ -88,12 +88,12 @@ function calculatePointerFromPubKey({token_class_id, sign_alg, hash_alg, secret,
 
 function calculateExpectedPointerFromPubAddr({token_class_id, sign_alg, hash_alg, pubkey, salt, signature, nonce, sourceState}){
     if(!verify(pubkey, salt, signature))
-    throw new Error("Salt was not signed correctly");
+	throw new Error("Salt was not signed correctly");
 
     const signAlgCode = hash(sign_alg);
     const hashAlgCode = hash(hash_alg);
     if(hash(sourceState+signature) !== nonce)
-    throw new Error("Nonce was not derived correctly");
+	throw new Error("Nonce was not derived correctly");
     return hash(token_class_id+signAlgCode+hashAlgCode+pubkey+nonce);
 }
 
@@ -122,7 +122,7 @@ function calculateRequestId(hash, pubKey, state){
     return hash(pubKey+state);
 }
 
-async function calculateGenesisRequestId(tokenId){
+function calculateGenesisRequestId(tokenId){
     const minterSigner = getMinterSigner(tokenId);
     const minterPubkey = minterSigner.getPubKey();
     const genesisState = calculateGenesisStateHash(tokenId);
@@ -134,7 +134,7 @@ function calculateMintPayload(tokenId, tokenClass, tokenValue, dataHash, destPoi
     return hash(tokenId+tokenClass+value+dataHash+destPointer+salt);
 }
 
-async function calculatePayload(source, destPointer, salt, dataHash){
+function calculatePayload(source, destPointer, salt, dataHash){
     return hash(source.calculateStateHash()+destPointer+salt+(dataHash?dataHash:''));
 }
 
@@ -143,7 +143,19 @@ function resolveReference(dest_ref){
     return { pointer: dest_ref.substring(5) };
     if(dest_ref.startsWith('pub'))
     return { pubkey: dest_ref.substring(3) };
+    if(dest_ref.startsWith('nametag'))
+    return { nametag: dest_ref.substring(7) };
     return dest_ref;
+}
+
+function destRefFromNametag(requestedNametagId, nametagTokens){
+//    console.log(nametagTokens);
+    const nametagToken = nametagTokens['nametag_'+requestedNametagId];
+    if(!nametagToken)
+	throw new Error("Requested nametag token  "+requestedNametagId + " not provided");
+    return resolveReference(nametagToken.state.data.dest_ref).nametag?
+	destRefFromNametag(nametagToken.state.data.dest_ref, nametagTokens):
+	nametagToken.state.data.dest_ref;
 }
 
 async function isUnspent(provider, state){
@@ -151,7 +163,7 @@ async function isUnspent(provider, state){
     return status == NOT_INCLUDED;
 }
 
-async function confirmOwnership(token, signer){
+function confirmOwnership(token, signer){
     return token.state.challenge.pubkey == signer.getPubKey();
 }
 
@@ -206,6 +218,7 @@ module.exports = {
     generateRecipientPointerAddr,
     generateRecipientPubkeyAddr,
     resolveReference,
+    destRefFromNametag,
     confirmOwnership,
 //    getMinterSigner,
     getMinterProvider,
