@@ -1,6 +1,6 @@
 {
   "name": "@unicitylabs/shared",
-  "version": "1.2.9",
+  "version": "1.2.10",
   "description": "A library of shared routines to be used in aggregators, tx-flow runtime and unicity apps",
   "main": "index.js",
   "scripts": {
@@ -17,8 +17,8 @@
   },
   "homepage": "https://github.com/unicitynetwork/shared#readme",
   "dependencies": {
-    "@unicitylabs/prefix-hash-tree": "^1.2.6",
-    "@unicitylabs/utils": "^1.2.5",
+    "@unicitylabs/prefix-hash-tree": "^1.2.7",
+    "@unicitylabs/utils": "^1.2.6",
     "axios": "^1.7.9",
     "crypto-js": "^4.2.0",
     "elliptic": "^6.6.1",
