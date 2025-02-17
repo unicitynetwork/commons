@@ -1,5 +1,5 @@
-const axios = require("axios");
 const { hash } = require('../hasher/sha256hasher.js').SHA256Hasher;
+const fetch = require("node-fetch"); // Use fetch instead of Axios
 
 class JSONRPCTransport {
   constructor(endpoint) {
@@ -21,11 +21,17 @@ class JSONRPCTransport {
     };
 
     try {
-      const response = await axios.post(this.endpoint, payload);
-      if (response.data.error) {
-        throw new Error(response.data.error.message);
+      const response = await fetch(this.endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+      if (data.error) {
+        throw new Error(data.error.message);
       }
-      return { requestId: params.requestId, result: response.data.result };
+      return { requestId: params.requestId, result: data.result };
     } catch (error) {
       console.error("JSON-RPC Request Error:", error);
       throw error;
@@ -33,4 +39,4 @@ class JSONRPCTransport {
   }
 }
 
-module.exports = { JSONRPCTransport }
+module.exports = { JSONRPCTransport };
