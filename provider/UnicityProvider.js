@@ -129,13 +129,13 @@ function calculateGenesisRequestId(tokenId){
     return calculateRequestId(hash, minterPubkey, genesisState);
 }
 
-function calculateMintPayload(tokenId, tokenClass, tokenValue, dataHash, destPointer, salt){
+function calculateMintPayload(tokenId, tokenClass, tokenValue, tokenData, dataHash, destPointer, salt){
     const value = `${tokenValue.toString(16).slice(2).padStart(64, "0")}`;
-    return hash(tokenId+tokenClass+value+dataHash+destPointer+salt);
+    return hash(tokenId+tokenClass+value+dataHash+destPointer+salt+(tokenData?objectHash(tokenData):''));
 }
 
-function calculatePayload(source, destPointer, salt, dataHash){
-    return hash(source.calculateStateHash()+destPointer+salt+(dataHash?dataHash:''));
+function calculatePayload(source, destPointer, salt, dataHash, msgHash){
+    return hash(source.calculateStateHash()+destPointer+salt+(dataHash?dataHash:'')+(msgHash?'ffff0000ffff'+msgHash:''));
 }
 
 function resolveReference(dest_ref){
