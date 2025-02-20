@@ -189,7 +189,21 @@ function validateOrConvert(paramName, value) {
 }
 
 function generateRandom256BitHex() {
-    return CryptoJS.lib.WordArray.random(32).toString(CryptoJS.enc.Hex);
+    if(crypto){
+	try{
+	    return crypto.randomBytes(32).toString('hex');
+	}catch(e){
+	    return CryptoJS.lib.WordArray.create(crypto.randomBytes(32)).toString(CryptoJS.enc.Hex);
+	}
+    }
+    else
+	return CryptoJS.lib.WordArray.random(32).toString(CryptoJS.enc.Hex);
+//    return CryptoJS.lib.WordArray.create(crypto.randomBytes(nBytes));
+}
+
+if (!global.crypto) {
+  global.crypto = require('crypto');
+  if(!crypto)var crypto = global.crypto;
 }
 
 module.exports = {
