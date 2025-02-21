@@ -1,5 +1,4 @@
 const { NODEL_FAILED, NOT_INCLUDED, NOT_MATCHING, NOT_AUTHENTICATED, WRONG_AUTH_TYPE, PATH_INVALID, OK } = require("../constants.js");
-const { wordArrayToHex, hexToWordArray, isWordArray, isHexString, smthash } = require("@unicitylabs/utils");
 const { verifyPath, includesPath } = require('@unicitylabs/prefix-hash-tree');
 
 const { AggregatorAPI } = require('../api/api.js');
