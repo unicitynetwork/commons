@@ -8,7 +8,7 @@
     "lint": "eslint \"src/**/*\"",
     "lint:fix": "eslint \"src/**/*\" --fix",
     "test": "jest tests/unit/",
-    "test:ci": "jest tests/unit/ --ci --reporters=default --reporters=jest-junit"
+    "test:ci": "jest tests/unit/ --ci --reporters=default"
   },
   "repository": {
     "type": "git",

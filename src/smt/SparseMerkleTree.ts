@@ -5,7 +5,7 @@ import { RootNode } from './RootNode.js';
 import { IHashAlgorithm } from '../hash/DataHasher.js';
 import { HexConverter } from '../util/HexConverter.js';
 
-type PathStep = [string, bigint?] | Uint8Array | null;
+type PathStep = [string | null, bigint?] | Uint8Array | null;
 type Path = ReadonlyArray<PathStep>;
 
 type CommonPath = { length: bigint; path: bigint };
@@ -51,7 +51,6 @@ export class SparseMerkleTree {
     return this.root.toString();
   }
 
-  // TODO: Improve path generation
   private generatePath(remainingPath: bigint, branch: Branch | null, siblingBranch: Branch | null): Path {
     if (branch === null) {
       return [null];
@@ -59,10 +58,16 @@ export class SparseMerkleTree {
 
     const commonPath = SparseMerkleTree.calculateCommonPath(remainingPath, branch.path);
     const isRight = (remainingPath >> commonPath.length) & 1n;
+    const siblingHash = siblingBranch ? HexConverter.encode(siblingBranch.hash) : null;
 
     if (branch.path === commonPath.path) {
       if (branch instanceof LeafBranch) {
-        return [branch.value, [HexConverter.encode(siblingBranch?.hash ?? new Uint8Array()), branch.path]];
+        return [branch.value, [siblingHash, branch.path]];
+      }
+
+      // If path has ended, return the current non leaf branch data
+      if (remainingPath >> commonPath.length === 1n) {
+        return [branch.hash, [siblingHash, branch.path]];
       }
 
       return [
@@ -71,17 +76,15 @@ export class SparseMerkleTree {
           isRight ? branch.right : branch.left,
           isRight ? branch.left : branch.right,
         ),
-        branch instanceof RootNode
-          ? [HexConverter.encode(branch.hash)]
-          : [HexConverter.encode(siblingBranch?.hash ?? new Uint8Array()), branch.path],
+        branch instanceof RootNode ? [HexConverter.encode(branch.hash)] : [siblingHash, branch.path],
       ];
     }
 
     if (branch instanceof LeafBranch) {
-      return [branch.value, [HexConverter.encode(siblingBranch?.hash ?? new Uint8Array()), branch.path]];
+      return [branch.value, [siblingHash, branch.path]];
     }
 
-    return [branch.hash, [HexConverter.encode(siblingBranch?.hash ?? new Uint8Array()), branch.path]];
+    return [branch.hash, [siblingHash, branch.path]];
   }
 
   private buildTree(branch: Branch, remainingPath: bigint, value: Uint8Array): Promise<NodeBranch>;

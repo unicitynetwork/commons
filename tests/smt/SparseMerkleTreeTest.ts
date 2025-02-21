@@ -19,6 +19,7 @@ describe('SMT routines', function () {
     { path: 0b11010101n, value: 'value1010101' },
   ];
 
+
   it('should verify paths', async () => {
     const smt = await SparseMerkleTree.create(HashAlgorithm.SHA256);
     const textEncoder = new TextEncoder();
@@ -36,12 +37,15 @@ describe('SMT routines', function () {
       'Cannot extend tree through leaf.',
     );
 
-    // console.log(test.getPath(0b10101010n));
-    // console.log(smt.getPath(0b10101010n));
-    console.log(smt.getPath(0b1n));
-    console.log(test.getPath(0b1n));
-    // console.log(HexConverter.encode(smt.rootHash));
     console.log(smt.toString());
+
+    //console.log(test.getPath(0b10101010n));
+    //console.log(smt.getPath(0b10101010n));
+    console.log(smt.getPath(0b100n));
+    console.log(test.getPath(0b100n));
+    //console.log(smt.getPath(0b1n));
+    //console.log(test.getPath(0b1n));
+    // console.log(HexConverter.encode(smt.rootHash));
 
     // checkPaths(smt, leavesSparse, (path) => path, true, (requestedPath) => "Path "+requestedPath.toString(2)+" should be included");
   });
@@ -53,5 +57,19 @@ describe('SMT routines', function () {
       length: 7n,
       path: 0b10010000n,
     });
+  });
+
+  it('get path', async () => {
+    const smt = await SparseMerkleTree.create(HashAlgorithm.SHA256);
+    const textEncoder = new TextEncoder();
+
+    for (const leaf of leavesSparse) {
+      await smt.addLeaf(leaf.path, textEncoder.encode(leaf.value));
+    }
+
+    console.log(smt.getPath(0b11010n))
+
+    expect(smt.getPath(0b11010n)).toStrictEqual([]);
+    expect(smt.getPath(0b10101010n)).toStrictEqual([]);
   });
 });
