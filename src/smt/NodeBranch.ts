@@ -1,14 +1,13 @@
-import { hexToBytes } from '@noble/hashes/utils';
-
 import { Branch } from './Branch.js';
 import { DataHasher, IHashAlgorithm } from '../hash/DataHasher.js';
+import { BigintConverter } from '../util/BigintConverter.js';
 import { dedent } from '../util/StringUtils.js';
 
 export class NodeBranch {
   public constructor(
     public readonly path: bigint,
-    public readonly left: Branch | null,
-    public readonly right: Branch | null,
+    public readonly left: Branch,
+    public readonly right: Branch,
     private readonly _hash: Uint8Array,
   ) {}
 
@@ -19,21 +18,19 @@ export class NodeBranch {
   public static async create(
     algorithm: IHashAlgorithm,
     path: bigint,
-    left: Branch | null,
-    right: Branch | null,
+    left: Branch,
+    right: Branch,
   ): Promise<NodeBranch> {
     const hash = await new DataHasher(algorithm)
       .update(left?.hash ?? new Uint8Array(1))
       .update(right?.hash ?? new Uint8Array(1))
       .digest();
-    const pathBase16 = path.toString(16);
-    const pathHex = (pathBase16.length % 2 !== 0 ? '0' : '') + pathBase16;
 
     return new NodeBranch(
       path,
       left,
       right,
-      await new DataHasher(algorithm).update(hexToBytes(pathHex)).update(hash).digest(),
+      await new DataHasher(algorithm).update(BigintConverter.encode(path)).update(hash).digest(),
     );
   }
 

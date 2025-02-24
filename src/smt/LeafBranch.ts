@@ -1,6 +1,5 @@
-import { hexToBytes } from '@noble/hashes/utils';
-
 import { DataHasher, IHashAlgorithm } from '../hash/DataHasher.js';
+import { BigintConverter } from '../util/BigintConverter.js';
 import { HexConverter } from '../util/HexConverter.js';
 import { dedent } from '../util/StringUtils.js';
 
@@ -16,9 +15,7 @@ export class LeafBranch {
   }
 
   public static async create(algorithm: IHashAlgorithm, path: bigint, value: Uint8Array): Promise<LeafBranch> {
-    const pathBase16 = path.toString(16);
-    const pathHex = (pathBase16.length % 2 !== 0 ? '0' : '') + pathBase16;
-    const hash = await new DataHasher(algorithm).update(hexToBytes(pathHex)).update(value).digest();
+    const hash = await new DataHasher(algorithm).update(BigintConverter.encode(path)).update(value).digest();
     return new LeafBranch(path, value, hash);
   }
 

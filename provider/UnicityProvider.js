@@ -1,16 +1,17 @@
 const { NODEL_FAILED, NOT_INCLUDED, NOT_MATCHING, NOT_AUTHENTICATED, WRONG_AUTH_TYPE, PATH_INVALID, OK } = require("../constants.js");
 const { verifyPath, includesPath } = require('@unicitylabs/prefix-hash-tree');
 
-const { AggregatorAPI } = require('../api/api.js');
 const { SignerEC, verify, getTxSigner } = require('../signer/SignerEC.js');
 const { hash, objectHash } = require('../hasher/sha256hasher.js').SHA256Hasher;
 const { SHA256Hasher } = require('../hasher/sha256hasher.js');
+const { AggregatorClient } = require('../src/api/AggregatorClient.js');
+const { JsonRpcHttpTransport } = require('../src/client/JsonRpcHttpTransport.js');
 
 class UnicityProvider{
 
-    constructor(transport, signer){
-	this.api = new AggregatorAPI(transport);
-	this.signer = signer;
+    constructor(transport: JsonRpcHttpTransport, signer){
+	this.api = new AggregatorClient(transport);
+	this.signingService = signer;
     }
 
     async submitStateTransition(sourceStateHash, transitionHash){
@@ -24,14 +25,14 @@ class UnicityProvider{
     }
 
     getRequestId(sourceStateHash){
-	return calculateRequestId(hash, this.signer.getPubKey(), sourceStateHash);
+	return calculateRequestId(hash, this.signingService.getPubKey(), sourceStateHash);
     }
 
     getAuthenticator(sourceStateHash, transitionHash){
 	return {
 	    state: sourceStateHash,
-	    pubkey: this.signer.getPubKey(), 
-	    signature: this.signer.sign(transitionHash), 
+	    pubkey: this.signingService.getPubKey(),
+	    signature: this.signer.sign(transitionHash),
 	    sign_alg: SignerEC.getAlg(), 
 	    hash_alg: SHA256Hasher.getAlg()
 	};
