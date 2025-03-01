@@ -1,24 +1,36 @@
-import { JsonRpcHttpTransport } from '../client/JsonRpcHttpTransport';
+import { Authenticator } from './Authenticator.js';
+import { SubmitStateTransitionResponse } from './SubmitStateTransitionResponse.js';
+import { JsonRpcHttpTransport } from '../client/JsonRpcHttpTransport.js';
+import { AgentProof } from '../smt/AgentProof.js';
+import { HexConverter } from '../util/HexConverter.js';
 
 export class AggregatorClient {
-  public constructor(private readonly transport: JsonRpcHttpTransport) {}
+  private readonly transport: JsonRpcHttpTransport;
+  public constructor(url: string) {
+    this.transport = new JsonRpcHttpTransport(url);
+  }
 
-  async submitStateTransition(requestId, payload, authenticator) {
+  public async submitStateTransition(
+    requestId: Uint8Array,
+    payload: Uint8Array,
+    authenticator: Authenticator,
+  ): Promise<SubmitStateTransitionResponse> {
     const data = {
-      requestId,
-      payload,
-      authenticator,
+      authenticator: authenticator.toDto(),
+      payload: HexConverter.encode(payload),
+      requestId: HexConverter.encode(requestId),
     };
-    return await this.transport.request('aggregator_submit', data);
+
+    return SubmitStateTransitionResponse.fromDto(await this.transport.request('aggregator_submit', data));
   }
 
-  async getInclusionProof(requestId, blockNum) {
-    const data = { requestId, blockNum };
-    return await this.transport.request('aggregator_get_path', data);
+  public async getInclusionProof(requestId: bigint, blockNum: bigint): Promise<AgentProof> {
+    const data = { blockNum: blockNum.toString(), requestId: requestId.toString() };
+    return AgentProof.fromDto(await this.transport.request('aggregator_get_path', data));
   }
 
-  async getNodelProof(blockNum) {
-    const data = { requestId };
-    return await this.transport.request('aggregator_get_nodel', data);
+  public getNodelProof(requestId: bigint): Promise<unknown> {
+    const data = { requestId: requestId.toString() };
+    return this.transport.request('aggregator_get_nodel', data);
   }
 }

@@ -1,6 +1,7 @@
 import { Branch } from './Branch.js';
 import { LeafBranch } from './LeafBranch.js';
-import { MerkleTreePath, MerkleTreePathStep } from './MerkleTreePath.js';
+import { MerkleTreePath } from './MerkleTreePath.js';
+import { MerkleTreePathStep } from './MerkleTreePathStep.js';
 import { NodeBranch } from './NodeBranch.js';
 import { RootNode } from './RootNode.js';
 import { IHashAlgorithm } from '../hash/DataHasher.js';
@@ -55,10 +56,7 @@ export class SparseMerkleTree {
   }
 
   public getPath(path: bigint): MerkleTreePath {
-    return {
-      path: this.generatePath(path, this.root.left, this.root.right),
-      root: this.rootHash,
-    };
+    return new MerkleTreePath(this.rootHash, this.generatePath(path, this.root.left, this.root.right));
   }
 
   public toString(): string {
@@ -69,7 +67,7 @@ export class SparseMerkleTree {
     remainingPath: bigint,
     left: Branch | null,
     right: Branch | null,
-  ): ReadonlyArray<MerkleTreePathStep> {
+  ): ReadonlyArray<MerkleTreePathStep | null> {
     const isRight = remainingPath & 1n;
     const branch = isRight ? right : left;
     const siblingBranch = isRight ? left : right;
@@ -82,25 +80,25 @@ export class SparseMerkleTree {
 
     if (branch.path === commonPath.path) {
       if (branch instanceof LeafBranch) {
-        return [{ path: branch.path, sibling: siblingBranch?.hash, value: branch.value }];
+        return [MerkleTreePathStep.createFromLeaf(branch, siblingBranch)];
       }
 
       // If path has ended, return the current non leaf branch data
       if (remainingPath >> commonPath.length === 1n) {
-        return [{ path: branch.path, sibling: siblingBranch?.hash }];
+        return [MerkleTreePathStep.createFromBranch(branch, siblingBranch)];
       }
 
       return [
         ...this.generatePath(remainingPath >> commonPath.length, branch.left, branch.right),
-        { path: branch.path, sibling: siblingBranch?.hash },
+        MerkleTreePathStep.createFromBranch(branch, siblingBranch),
       ];
     }
 
     if (branch instanceof LeafBranch) {
-      return [{ path: branch.path, sibling: siblingBranch?.hash, value: branch.value }];
+      return [MerkleTreePathStep.createFromLeaf(branch, siblingBranch)];
     }
 
-    return [{ path: branch.path, sibling: siblingBranch?.hash }];
+    return [MerkleTreePathStep.createFromBranch(branch, siblingBranch)];
   }
 
   private async buildTree(branch: Branch, remainingPath: bigint, value: Uint8Array): Promise<Branch> {

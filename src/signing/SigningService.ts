@@ -2,6 +2,7 @@ import { secp256k1 } from '@noble/curves/secp256k1';
 import { sha256 } from '@noble/hashes/sha256';
 
 import { ISigningService } from './ISigningService.js';
+import { DataHasher, HashAlgorithm } from '../hash/DataHasher.js';
 
 /**
  * Default signing service.
@@ -34,13 +35,33 @@ export class SigningService implements ISigningService {
     return secp256k1.utils.randomPrivateKey();
   }
 
+  public static async createFromSecret(secret: Uint8Array, nonce?: Uint8Array): Promise<ISigningService> {
+    const hasher = new DataHasher(HashAlgorithm.SHA256);
+    hasher.update(secret);
+    if (nonce) {
+      hasher.update(nonce);
+    }
+
+    return new SigningService(await hasher.digest());
+  }
+
   /**
    * Verify secp256k1 signature hash.
-   * @param hash Hash.
-   * @param signature Signature.
+   * @param {Uint8Array} hash Hash.
+   * @param {Uint8Array} signature Signature.
+   * @param {Uint8Array} publicKey Public key.
+   */
+  public static verifyWithPublicKey(hash: Uint8Array, signature: Uint8Array, publicKey: Uint8Array): Promise<boolean> {
+    return Promise.resolve(secp256k1.verify(signature, hash, publicKey, { format: 'compact' }));
+  }
+
+  /**
+   * Verify secp256k1 signature hash.
+   * @param {Uint8Array} hash Hash.
+   * @param {Uint8Array} signature Signature.
    */
   public verify(hash: Uint8Array, signature: Uint8Array): Promise<boolean> {
-    return Promise.resolve(secp256k1.verify(signature, hash, this._publicKey, { format: 'compact' }));
+    return SigningService.verifyWithPublicKey(hash, signature, this._publicKey);
   }
 
   /**

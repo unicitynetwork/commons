@@ -6,7 +6,6 @@ import { LeafBranch } from '../../src/smt/LeafBranch.js';
 import { NodeBranch } from '../../src/smt/NodeBranch.js';
 import { RootNode } from '../../src/smt/RootNode.js';
 import { SparseMerkleTree } from '../../src/smt/SparseMerkleTree.js';
-import { verifyMerkleTreePath } from '../../src/smt/VerifyMerkleTreePath.js';
 import { HexConverter } from '../../src/util/HexConverter.js';
 
 type TreeResult = { path: bigint; hash: string; value?: string; left?: TreeResult; right?: TreeResult };
@@ -163,19 +162,19 @@ describe('SMT routines', function () {
       await smt.addLeaf(leaf.path, textEncoder.encode(leaf.value));
     }
 
-    expect(await verifyMerkleTreePath(0b11010n, smt.getPath(0b11010n))).toEqual({
-      isIntegrityIntact: true,
+    expect(await smt.getPath(0b11010n).verify(0b11010n)).toEqual({
       isPathIncluded: false,
+      isPathInvalid: true,
       result: false,
     });
-    expect(await verifyMerkleTreePath(0b110010000n, smt.getPath(0b110010000n))).toEqual({
-      isIntegrityIntact: true,
+    expect(await smt.getPath(0b110010000n).verify(0b110010000n)).toEqual({
       isPathIncluded: true,
+      isPathInvalid: true,
       result: true,
     });
-    expect(await verifyMerkleTreePath(0b11010n, smt.getPath(0b110010000n))).toEqual({
-      isIntegrityIntact: true,
+    expect(await smt.getPath(0b110010000n).verify(0b11010n)).toEqual({
       isPathIncluded: false,
+      isPathInvalid: true,
       result: false,
     });
   });

@@ -1,7 +1,7 @@
 import { v4 as uuid } from 'uuid';
 
 import { IJsonRpcResponse } from './IJsonRpcResponse.js';
-import { JsonRpcError } from './JsonRpcError';
+import { JsonRpcError } from './JsonRpcError.js';
 
 /**
  * JSON-RPC HTTP service.
@@ -20,7 +20,7 @@ export class JsonRpcHttpTransport {
    * Send a JSON-RPC request.
    * @see {T}
    */
-  public async request<T>(method: string, params: unknown | null): Promise<T> {
+  public async request(method: string, params: unknown | null): Promise<unknown> {
     const response = await fetch(this.url, {
       body: JSON.stringify({
         id: uuid(),
@@ -45,6 +45,6 @@ export class JsonRpcHttpTransport {
       throw new JsonRpcError(data.error);
     }
 
-    return data.result as T;
+    return data.result;
   }
 }

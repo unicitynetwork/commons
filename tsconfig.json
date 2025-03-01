@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "outDir": "./lib",
     "target": "es2022",
     "allowJs": true,
     "skipLibCheck": true,
@@ -18,5 +19,8 @@
     "node_modules",
     "tests",
     "lib"
+  ],
+  "include": [
+    "src/**/*.ts"
   ]
 }
