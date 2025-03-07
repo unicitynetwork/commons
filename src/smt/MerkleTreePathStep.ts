@@ -37,7 +37,7 @@ export class MerkleTreePathStep {
 
   public static fromDto(data: unknown): MerkleTreePathStep {
     if (!MerkleTreePathStep.isDto(data)) {
-      throw new Error('Invalid serialized merkle tree path step.');
+      throw new Error('Parsing merkle tree path step failed.');
     }
 
     return new MerkleTreePathStep(

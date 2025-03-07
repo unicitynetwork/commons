@@ -4,32 +4,39 @@ import { DataHasher, HashAlgorithm } from '../hash/DataHasher.js';
 import { SigningService } from '../signing/SigningService.js';
 import { HexConverter } from '../util/HexConverter.js';
 
-export interface IAgentProofDto {
+export interface IInclusionProofDto {
   merkleTreePath: IMerkleTreePathDto;
   authenticator: IAuthenticatorDto;
   payload: string;
 }
 
-export class AgentProof {
+export enum InclusionProofVerificationStatus {
+  NOT_AUTHENTICATED = 'NOT_AUTHENTICATED',
+  NOT_INCLUDED = 'NOT_INCLUDED',
+  PATH_INVALID = 'PATH_INVALID',
+  OK = 'OK',
+}
+
+export class InclusionProof {
   public constructor(
     public readonly merkleTreePath: MerkleTreePath,
     public readonly authenticator: Authenticator,
     public readonly payload: Uint8Array,
   ) {}
 
-  public static fromDto(data: unknown): AgentProof {
-    if (!AgentProof.isDto(data)) {
-      throw new Error('Invalid serialized agent proof.');
+  public static fromDto(data: unknown): InclusionProof {
+    if (!InclusionProof.isDto(data)) {
+      throw new Error('Parsing inclusion proof dto failed.');
     }
 
-    return new AgentProof(
+    return new InclusionProof(
       MerkleTreePath.fromDto(data.merkleTreePath),
       Authenticator.fromDto(data.authenticator),
       HexConverter.decode(data.payload),
     );
   }
 
-  public static isDto(data: unknown): data is IAgentProofDto {
+  public static isDto(data: unknown): data is IInclusionProofDto {
     return (
       data instanceof Object &&
       'merkleTreePath' in data &&
@@ -39,7 +46,7 @@ export class AgentProof {
     );
   }
 
-  public toDto(): IAgentProofDto {
+  public toDto(): IInclusionProofDto {
     return {
       authenticator: this.authenticator.toDto(),
       merkleTreePath: this.merkleTreePath.toDto(),
@@ -47,7 +54,7 @@ export class AgentProof {
     };
   }
 
-  public async verify(requestId: bigint): Promise<string> {
+  public async verify(requestId: bigint): Promise<InclusionProofVerificationStatus> {
     if (
       !(await SigningService.verifyWithPublicKey(
         this.authenticator.publicKey,
@@ -55,7 +62,7 @@ export class AgentProof {
         this.authenticator.signature,
       ))
     ) {
-      return 'NOT_AUTHENTICATED';
+      return InclusionProofVerificationStatus.NOT_AUTHENTICATED;
     }
 
     const hash = await new DataHasher(HashAlgorithm.SHA256)
@@ -72,18 +79,18 @@ export class AgentProof {
     if (
       HexConverter.encode(hash) !== HexConverter.encode(this.merkleTreePath.steps.at(-1)?.value ?? new Uint8Array())
     ) {
-      return 'NOT_INCLUDED';
+      return InclusionProofVerificationStatus.NOT_INCLUDED;
     }
 
     const result = await this.merkleTreePath.verify(requestId);
     if (!result.isPathInvalid) {
-      return 'PATH_INVALID';
+      return InclusionProofVerificationStatus.PATH_INVALID;
     }
 
     if (!result.isPathIncluded) {
-      return 'NOT_INCLUDED';
+      return InclusionProofVerificationStatus.NOT_INCLUDED;
     }
 
-    return 'OK';
+    return InclusionProofVerificationStatus.OK;
   }
 }

@@ -27,7 +27,7 @@ export class MerkleTreePath {
 
   public static fromDto(data: unknown): MerkleTreePath {
     if (!MerkleTreePath.isDto(data)) {
-      throw new Error('Invalid serialized merkle tree path.');
+      throw new Error('Parsing merkle tree path dto failed.');
     }
 
     return new MerkleTreePath(

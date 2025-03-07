@@ -35,7 +35,7 @@ export class Authenticator {
 
   public static fromDto(data: unknown): Authenticator {
     if (!Authenticator.isDto(data)) {
-      throw new Error('Invalid serialized authenticator.');
+      throw new Error('Parsing authenticator dto failed.');
     }
 
     return new Authenticator(

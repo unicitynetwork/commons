@@ -8,7 +8,7 @@ export class SubmitStateTransitionResponse {
 
   public static fromDto(data: unknown): SubmitStateTransitionResponse {
     if (!SubmitStateTransitionResponse.isDto(data)) {
-      throw new Error('Invalid serialized submit state transition response.');
+      throw new Error('Parsing submit state transition response failed.');
     }
 
     return new SubmitStateTransitionResponse(data.status, BigInt(data.requestId));
