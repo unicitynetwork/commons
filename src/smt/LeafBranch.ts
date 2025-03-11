@@ -6,9 +6,16 @@ import { dedent } from '../util/StringUtils.js';
 export class LeafBranch {
   public constructor(
     public readonly path: bigint,
-    public readonly value: Uint8Array,
+    private readonly _value: Uint8Array,
     private readonly _hash: Uint8Array,
-  ) {}
+  ) {
+    this._value = new Uint8Array(_value);
+    this._hash = new Uint8Array(_hash);
+  }
+
+  public get value(): Uint8Array {
+    return new Uint8Array(this._value);
+  }
 
   public get hash(): Uint8Array {
     return new Uint8Array(this._hash);
@@ -22,7 +29,7 @@ export class LeafBranch {
   public toString(): string {
     return dedent`
       Branch[${this.path.toString(2)}]:
-        hash: ${HexConverter.encode(this.hash)} 
-        value: ${HexConverter.encode(this.value)}`;
+        hash: ${HexConverter.encode(this._hash)} 
+        value: ${HexConverter.encode(this._value)}`;
   }
 }

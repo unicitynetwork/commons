@@ -1,4 +1,4 @@
-import { HexConverter } from '../util/HexConverter.js';
+import { HexConverter } from "../util/HexConverter";
 
 export interface IAuthenticatorDto {
   hashAlgorithm: string;
@@ -14,11 +14,11 @@ export class Authenticator {
     private readonly _publicKey: Uint8Array,
     public readonly signatureAlgorithm: string,
     private readonly _signature: Uint8Array,
-    private readonly _state: Uint8Array,
+    private readonly _stateHash: Uint8Array,
   ) {
     this._publicKey = new Uint8Array(_publicKey);
     this._signature = new Uint8Array(_signature);
-    this._state = new Uint8Array(_state);
+    this._stateHash = new Uint8Array(_stateHash);
   }
 
   public get publicKey(): Uint8Array {
@@ -30,7 +30,7 @@ export class Authenticator {
   }
 
   public get state(): Uint8Array {
-    return new Uint8Array(this._state);
+    return new Uint8Array(this._stateHash);
   }
 
   public static fromDto(data: unknown): Authenticator {

@@ -1,7 +1,7 @@
 {
-  "name": "@unicitylabs/shared",
+  "name": "@unicitylabs/commons",
   "version": "2.0.0",
-  "description": "A library of shared routines to be used in aggregators, tx-flow runtime and unicity apps",
+  "description": "A library of shared routines to be used in unicity",
   "main": "index.js",
   "type": "module",
   "exports": {

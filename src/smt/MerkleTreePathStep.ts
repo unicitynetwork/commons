@@ -15,8 +15,8 @@ export class MerkleTreePathStep {
     private readonly _value: Uint8Array | null,
     private readonly _sibling: Uint8Array | null,
   ) {
-    this._value = this._value ? new Uint8Array(this._value) : null;
-    this._sibling = this._sibling ? new Uint8Array(this._sibling) : null;
+    this._value = _value ? new Uint8Array(_value) : null;
+    this._sibling = _sibling ? new Uint8Array(_sibling) : null;
   }
 
   public get value(): Uint8Array | null {

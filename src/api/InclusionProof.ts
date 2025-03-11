@@ -1,8 +1,8 @@
-import { IMerkleTreePathDto, MerkleTreePath } from './MerkleTreePath.js';
-import { Authenticator, IAuthenticatorDto } from '../api/Authenticator.js';
-import { DataHasher, HashAlgorithm } from '../hash/DataHasher.js';
-import { SigningService } from '../signing/SigningService.js';
-import { HexConverter } from '../util/HexConverter.js';
+import { DataHasher, HashAlgorithm } from "../hash/DataHasher";
+import { SigningService } from "../signing/SigningService";
+import { IMerkleTreePathDto, MerkleTreePath } from "../smt/MerkleTreePath";
+import { HexConverter } from "../util/HexConverter";
+import { Authenticator, IAuthenticatorDto } from "./Authenticator";
 
 export interface IInclusionProofDto {
   merkleTreePath: IMerkleTreePathDto;
@@ -21,8 +21,14 @@ export class InclusionProof {
   public constructor(
     public readonly merkleTreePath: MerkleTreePath,
     public readonly authenticator: Authenticator,
-    public readonly payload: Uint8Array,
-  ) {}
+    private readonly _payload: Uint8Array,
+  ) {
+    this._payload = new Uint8Array(_payload);
+  }
+
+  public get payload(): Uint8Array {
+    return new Uint8Array(this._payload);
+  }
 
   public static fromDto(data: unknown): InclusionProof {
     if (!InclusionProof.isDto(data)) {

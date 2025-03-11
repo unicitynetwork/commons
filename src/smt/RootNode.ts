@@ -9,7 +9,9 @@ export class RootNode {
     public readonly left: Branch | null,
     public readonly right: Branch | null,
     private readonly _hash: Uint8Array,
-  ) {}
+  ) {
+    this._hash = new Uint8Array(_hash);
+  }
 
   public get hash(): Uint8Array {
     return new Uint8Array(this._hash);

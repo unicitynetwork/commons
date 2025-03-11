@@ -21,9 +21,15 @@ export class MerkleTreePathVerificationResult {
 
 export class MerkleTreePath {
   public constructor(
-    public readonly root: Uint8Array,
+    private readonly _root: Uint8Array,
     public readonly steps: ReadonlyArray<MerkleTreePathStep | null>,
-  ) {}
+  ) {
+    this._root = new Uint8Array(_root);
+  }
+
+  public get root(): Uint8Array {
+    return new Uint8Array(this._root);
+  }
 
   public static fromDto(data: unknown): MerkleTreePath {
     if (!MerkleTreePath.isDto(data)) {

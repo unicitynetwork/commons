@@ -31,6 +31,10 @@ export class SigningService implements ISigningService {
     return 'secp256k1';
   }
 
+  public get hashAlgorithm(): string {
+    return 'sha256';
+  }
+
   public static generatePrivateKey(): Uint8Array {
     return secp256k1.utils.randomPrivateKey();
   }
