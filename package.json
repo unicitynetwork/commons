@@ -11,8 +11,8 @@
     "build": "tsc --noEmit",
     "lint": "eslint \"src/**/*\"",
     "lint:fix": "eslint \"src/**/*\" --fix",
-    "test": "jest tests/unit/",
-    "test:ci": "jest tests/unit/ --ci --reporters=default"
+    "test": "jest tests/",
+    "test:ci": "jest tests/ --ci --reporters=default"
   },
   "repository": {
     "type": "git",
