@@ -1,8 +1,8 @@
-import { DataHasher, HashAlgorithm } from "../hash/DataHasher";
-import { SigningService } from "../signing/SigningService";
-import { IMerkleTreePathDto, MerkleTreePath } from "../smt/MerkleTreePath";
-import { HexConverter } from "../util/HexConverter";
-import { Authenticator, IAuthenticatorDto } from "./Authenticator";
+import { Authenticator, IAuthenticatorDto } from './Authenticator.js';
+import { DataHasher, HashAlgorithm } from '../hash/DataHasher.js';
+import { SigningService } from '../signing/SigningService.js';
+import { IMerkleTreePathDto, MerkleTreePath } from '../smt/MerkleTreePath.js';
+import { HexConverter } from '../util/HexConverter.js';
 
 export interface IInclusionProofDto {
   merkleTreePath: IMerkleTreePathDto;

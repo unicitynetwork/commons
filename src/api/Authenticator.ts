@@ -1,4 +1,4 @@
-import { HexConverter } from "../util/HexConverter";
+import { HexConverter } from '../util/HexConverter.js';
 
 export interface IAuthenticatorDto {
   hashAlgorithm: string;
