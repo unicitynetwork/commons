@@ -2,6 +2,7 @@ import { Branch } from './Branch.js';
 import { LeafBranch } from './LeafBranch.js';
 import { NodeBranch } from './NodeBranch.js';
 import { HexConverter } from '../util/HexConverter.js';
+import { dedent } from '../util/StringUtils.js';
 
 export interface IMerkleTreePathStepDto {
   readonly path: string;
@@ -65,5 +66,13 @@ export class MerkleTreePathStep {
       sibling: this.sibling ? HexConverter.encode(this.sibling) : undefined,
       value: this.value ? HexConverter.encode(this.value) : undefined,
     };
+  }
+
+  public toString(): string {
+    return dedent`
+      Merkle Tree Path Step
+        Path: ${this.path}
+        Value: ${this._value ? HexConverter.encode(this._value) : 'null'}
+        Sibling: ${this._sibling ? HexConverter.encode(this._sibling) : 'null'}`;
   }
 }

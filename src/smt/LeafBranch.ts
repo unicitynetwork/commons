@@ -28,8 +28,8 @@ export class LeafBranch {
 
   public toString(): string {
     return dedent`
-      Branch[${this.path.toString(2)}]:
-        hash: ${HexConverter.encode(this._hash)} 
-        value: ${HexConverter.encode(this._value)}`;
+      Branch[${this.path.toString(2)}]
+        Hash: ${HexConverter.encode(this._hash)} 
+        Value: ${HexConverter.encode(this._value)}`;
   }
 }

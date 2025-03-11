@@ -3,6 +3,7 @@ import { DataHasher, HashAlgorithm } from '../hash/DataHasher.js';
 import { SigningService } from '../signing/SigningService.js';
 import { IMerkleTreePathDto, MerkleTreePath } from '../smt/MerkleTreePath.js';
 import { HexConverter } from '../util/HexConverter.js';
+import { dedent } from '../util/StringUtils.js';
 
 export interface IInclusionProofDto {
   merkleTreePath: IMerkleTreePathDto;
@@ -98,5 +99,13 @@ export class InclusionProof {
     }
 
     return InclusionProofVerificationStatus.OK;
+  }
+
+  public toString(): string {
+    return dedent`
+      Inclusion Proof
+        ${this.merkleTreePath.toString()}
+        ${this.authenticator.toString()}
+        Payload: ${HexConverter.encode(this._payload)}`;
   }
 }

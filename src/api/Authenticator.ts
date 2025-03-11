@@ -1,4 +1,5 @@
 import { HexConverter } from '../util/HexConverter.js';
+import { dedent } from '../util/StringUtils.js';
 
 export interface IAuthenticatorDto {
   hashAlgorithm: string;
@@ -71,5 +72,15 @@ export class Authenticator {
       signatureAlgorithm: this.signatureAlgorithm,
       state: HexConverter.encode(this.state),
     };
+  }
+
+  public toString(): string {
+    return dedent`
+      Authenticator
+        Hash Algorithm: ${this.hashAlgorithm}
+        Public Key: ${HexConverter.encode(this._publicKey)}
+        Hash Algorithm: ${this.hashAlgorithm}
+        Signature: ${HexConverter.encode(this._signature)}
+        State Hash: ${HexConverter.encode(this._stateHash)}`;
   }
 }

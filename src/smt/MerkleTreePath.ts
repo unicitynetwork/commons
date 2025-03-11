@@ -2,6 +2,7 @@ import { IMerkleTreePathStepDto, MerkleTreePathStep } from './MerkleTreePathStep
 import { DataHasher, HashAlgorithm } from '../hash/DataHasher.js';
 import { BigintConverter } from '../util/BigintConverter.js';
 import { HexConverter } from '../util/HexConverter.js';
+import { dedent } from '../util/StringUtils.js';
 
 export interface IMerkleTreePathDto {
   readonly root: string;
@@ -97,5 +98,12 @@ export class MerkleTreePath {
       !!currentHash && HexConverter.encode(currentHash) === HexConverter.encode(this.root),
       requestId === currentPath,
     );
+  }
+
+  public toString(): string {
+    return dedent`
+      Merkle Tree Path
+        Root: ${HexConverter.encode(this._root)} 
+        Steps: [\n${this.steps.map((step: MerkleTreePathStep | null) => step?.toString() ?? 'null').join('\n')}\n]`;
   }
 }
