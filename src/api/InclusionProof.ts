@@ -90,7 +90,7 @@ export class InclusionProof {
     }
 
     const result = await this.merkleTreePath.verify(requestId);
-    if (!result.isPathInvalid) {
+    if (!result.isPathValid) {
       return InclusionProofVerificationStatus.PATH_INVALID;
     }
 

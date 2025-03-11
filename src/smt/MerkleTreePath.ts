@@ -13,10 +13,10 @@ export class MerkleTreePathVerificationResult {
   public readonly result: boolean;
 
   public constructor(
-    public readonly isPathInvalid: boolean,
+    public readonly isPathValid: boolean,
     public readonly isPathIncluded: boolean,
   ) {
-    this.result = isPathInvalid && isPathIncluded;
+    this.result = isPathValid && isPathIncluded;
   }
 }
 

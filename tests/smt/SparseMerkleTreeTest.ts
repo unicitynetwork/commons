@@ -28,7 +28,7 @@ function validateTree(branch: Branch | RootNode | null, result?: TreeResult): vo
   }
 }
 
-describe('SMT routines', function () {
+describe('Sparse Merkle Tree tests', function () {
   const leavesSparse = [
     { path: 0b110010000n, value: 'value00010000' },
     { path: 0b100000000n, value: 'value00000000' },
@@ -164,17 +164,17 @@ describe('SMT routines', function () {
 
     expect(await smt.getPath(0b11010n).verify(0b11010n)).toEqual({
       isPathIncluded: false,
-      isPathInvalid: true,
+      isPathValid: true,
       result: false,
     });
     expect(await smt.getPath(0b110010000n).verify(0b110010000n)).toEqual({
       isPathIncluded: true,
-      isPathInvalid: true,
+      isPathValid: true,
       result: true,
     });
     expect(await smt.getPath(0b110010000n).verify(0b11010n)).toEqual({
       isPathIncluded: false,
-      isPathInvalid: true,
+      isPathValid: true,
       result: false,
     });
   });
