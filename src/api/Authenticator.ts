@@ -79,7 +79,7 @@ export class Authenticator {
       Authenticator
         Hash Algorithm: ${this.hashAlgorithm}
         Public Key: ${HexConverter.encode(this._publicKey)}
-        Hash Algorithm: ${this.hashAlgorithm}
+        Signature Algorithm: ${this.signatureAlgorithm}
         Signature: ${HexConverter.encode(this._signature)}
         State Hash: ${HexConverter.encode(this._stateHash)}`;
   }
