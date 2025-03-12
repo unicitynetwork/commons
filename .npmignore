@@ -4,7 +4,7 @@
 .DS_Store
 .npmrc
 
-.eslintrc.json
+eslint.config.js
 .prettierrc
 tsconfig.json
 jest.config.js
