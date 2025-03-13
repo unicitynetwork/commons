@@ -4,7 +4,7 @@ import { dedent } from '../util/StringUtils.js';
 export interface IAuthenticatorDto {
   hashAlgorithm: string;
   publicKey: string;
-  signatureAlgorithm: string;
+  algorithm: string;
   signature: string;
   state: string;
 }
@@ -13,7 +13,7 @@ export class Authenticator {
   public constructor(
     public readonly hashAlgorithm: string,
     private readonly _publicKey: Uint8Array,
-    public readonly signatureAlgorithm: string,
+    public readonly algorithm: string,
     private readonly _signature: Uint8Array,
     private readonly _stateHash: Uint8Array,
   ) {
@@ -42,7 +42,7 @@ export class Authenticator {
     return new Authenticator(
       data.hashAlgorithm,
       HexConverter.decode(data.publicKey),
-      data.signatureAlgorithm,
+      data.algorithm,
       HexConverter.decode(data.signature),
       HexConverter.decode(data.state),
     );
@@ -55,8 +55,8 @@ export class Authenticator {
       typeof data.hashAlgorithm === 'string' &&
       'publicKey' in data &&
       typeof data.publicKey === 'string' &&
-      'signatureAlgorithm' in data &&
-      typeof data.signatureAlgorithm === 'string' &&
+      'algorithm' in data &&
+      typeof data.algorithm === 'string' &&
       'signature' in data &&
       typeof data.signature === 'string' &&
       'state' in data &&
@@ -66,10 +66,10 @@ export class Authenticator {
 
   public toDto(): IAuthenticatorDto {
     return {
+      algorithm: this.algorithm,
       hashAlgorithm: this.hashAlgorithm,
       publicKey: HexConverter.encode(this.publicKey),
       signature: HexConverter.encode(this.signature),
-      signatureAlgorithm: this.signatureAlgorithm,
       state: HexConverter.encode(this.state),
     };
   }
@@ -79,7 +79,7 @@ export class Authenticator {
       Authenticator
         Hash Algorithm: ${this.hashAlgorithm}
         Public Key: ${HexConverter.encode(this._publicKey)}
-        Signature Algorithm: ${this.signatureAlgorithm}
+        Signature Algorithm: ${this.algorithm}
         Signature: ${HexConverter.encode(this._signature)}
         State Hash: ${HexConverter.encode(this._stateHash)}`;
   }

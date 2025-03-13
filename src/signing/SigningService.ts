@@ -1,5 +1,4 @@
 import { secp256k1 } from '@noble/curves/secp256k1';
-import { sha256 } from '@noble/hashes/sha256';
 
 import { ISigningService } from './ISigningService.js';
 import { DataHasher, HashAlgorithm } from '../hash/DataHasher.js';
@@ -29,10 +28,6 @@ export class SigningService implements ISigningService {
 
   public get algorithm(): string {
     return 'secp256k1';
-  }
-
-  public get hashAlgorithm(): string {
-    return 'sha256';
   }
 
   public static generatePrivateKey(): Uint8Array {
@@ -71,8 +66,7 @@ export class SigningService implements ISigningService {
   /**
    * @see {ISigningService.sign}
    */
-  public sign(bytes: Uint8Array): Promise<Uint8Array> {
-    const hash: Uint8Array = sha256(bytes);
+  public sign(hash: Uint8Array): Promise<Uint8Array> {
     const signature = secp256k1.sign(hash, this.privateKey);
     return Promise.resolve(new Uint8Array([...signature.toCompactRawBytes(), signature.recovery]));
   }

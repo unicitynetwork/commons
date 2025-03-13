@@ -1,5 +1,5 @@
-import { DataHasher, HashAlgorithm } from "../hash/DataHasher";
-import { HexConverter } from "../util/HexConverter";
+import { DataHasher, HashAlgorithm } from '../hash/DataHasher.js';
+import { HexConverter } from '../util/HexConverter.js';
 
 export class RequestId {
   private constructor(private readonly _hash: Uint8Array) {
