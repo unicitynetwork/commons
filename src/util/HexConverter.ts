@@ -16,6 +16,14 @@ export class HexConverter {
    * @returns {Uint8Array} byte array
    */
   public static decode(value: string): Uint8Array {
-    return hexToBytes(value);
+    // Validate it's a hex string
+    if (!/^[0-9a-fA-F]*$/.test(value)) {
+      // If invalid hex characters, use string encoding
+      return new TextEncoder().encode(value);
+    }
+    
+    // Ensure even length by padding with a leading zero if needed
+    const normalizedValue = value.length % 2 === 0 ? value : `0${value}`;
+    return hexToBytes(normalizedValue);
   }
 }
