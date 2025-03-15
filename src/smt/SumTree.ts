@@ -11,9 +11,14 @@ type CommonPath = { length: bigint; path: bigint };
 
 /**
  * A Merkle Sum Tree implementation
- * - leaf nodes contain a mapping of coin IDs to values
- * - non-leaf nodes contain sums of their children's coin values
- * - inclusion proofs contain coin values from neighbors
+ * - Leaf nodes contain a mapping of coin IDs to values
+ * - Non-leaf nodes contain combined values from their children
+ * - Values for the same coin ID are summed across different leaves
+ * - Inclusion proofs contain coin values from sibling nodes
+ * 
+ * This implementation correctly tracks the total value for each unique coin ID
+ * by summing their values across all leaves in the tree. This makes it suitable
+ * for applications like tracking asset balances across different transactions.
  */
 export class SumTree {
   /**
@@ -111,25 +116,31 @@ export class SumTree {
   }
 
   /**
-   * Gets the coin value for a specific coin ID
-   * @param {Uint8Array} coinId - The coin ID to look up
-   * @returns {bigint} The coin value, or 0n if not found
+   * Gets the total value for a specific coin ID, summed across all leaves
+   * @param {Uint8Array} coinId - The coin ID to calculate total for
+   * @returns {bigint} The total value for the specified coin, or 0 if not found
    */
-  public getCoinValue(coinId: Uint8Array): bigint {
+  public getTotalValue(coinId: Uint8Array): bigint {
     const idHex = HexConverter.encode(coinId);
     return this.root.coinData.get(idHex) || 0n;
   }
-
+  
   /**
-   * Gets the total value of all coins
-   * @returns {bigint} The total value
+   * Alias for getTotalValue for backward compatibility
+   * @param {Uint8Array} coinId - The coin ID to look up
+   * @returns {bigint} The total coin value, or 0n if not found
    */
-  public getTotalValue(): bigint {
-    let total = 0n;
-    for (const value of this.root.coinData.values()) {
-      total += value;
-    }
-    return total;
+  public getCoinValue(coinId: Uint8Array): bigint {
+    return this.getTotalValue(coinId);
+  }
+  
+  /**
+   * Gets all coin values in the tree, with each coin ID's total value 
+   * summed across all leaves containing that coin ID
+   * @returns {CoinDataMap} Map of coin IDs to their summed values
+   */
+  public getAllCoinValues(): CoinDataMap {
+    return this.root.coinData;
   }
 
   /**

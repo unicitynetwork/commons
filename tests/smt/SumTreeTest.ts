@@ -21,7 +21,7 @@ describe('SumTree', () => {
   it('should create an empty tree', () => {
     expect(tree.rootHash).toBeDefined();
     expect(tree.coinData.size).toBe(0);
-    expect(tree.getTotalValue()).toBe(0n);
+    expect(tree.getAllCoinValues().size).toBe(0);
   });
 
   it('should add leaf nodes with coin data', async () => {
@@ -33,13 +33,16 @@ describe('SumTree', () => {
     await tree.addLeaf(0b10n, coinData1);
     await tree.addLeaf(0b11n, coinData2);
     
-    // Check the total value
-    expect(tree.getTotalValue()).toBe(300n);
+    // Check the total values for each coin (using string comparison for BigInt)
+    expect(tree.getTotalValue(HexConverter.decode('0000')).toString()).toBe('100');
+    expect(tree.getTotalValue(HexConverter.decode('0001')).toString()).toBe('200');
+    expect(tree.getTotalValue(HexConverter.decode('0002')).toString()).toBe('0'); // Non-existent coin
     
-    // Check individual coin values
-    expect(tree.getCoinValue(HexConverter.decode('0000'))).toBe(100n);
-    expect(tree.getCoinValue(HexConverter.decode('0001'))).toBe(200n);
-    expect(tree.getCoinValue(HexConverter.decode('0002'))).toBe(0n); // Non-existent coin
+    // Check that values are kept separate
+    const allValues = tree.getAllCoinValues();
+    expect(allValues.size).toBe(2);
+    expect(allValues.get('0000')?.toString()).toBe('100');
+    expect(allValues.get('0001')?.toString()).toBe('200');
   });
 
   it('should handle multiple coins in a single leaf', async () => {
@@ -52,13 +55,17 @@ describe('SumTree', () => {
     // Add leaf to the tree
     await tree.addLeaf(0b100n, coinData);
     
-    // Check the total value
-    expect(tree.getTotalValue()).toBe(150n);
+    // Check the total values for each coin
+    expect(tree.getTotalValue(HexConverter.decode('aabb')).toString()).toBe('50');
+    expect(tree.getTotalValue(HexConverter.decode('ccdd')).toString()).toBe('75');
+    expect(tree.getTotalValue(HexConverter.decode('eeff')).toString()).toBe('25');
     
-    // Check individual coin values
-    expect(tree.getCoinValue(HexConverter.decode('aabb'))).toBe(50n);
-    expect(tree.getCoinValue(HexConverter.decode('ccdd'))).toBe(75n);
-    expect(tree.getCoinValue(HexConverter.decode('eeff'))).toBe(25n);
+    // Verify that all coins are present with correct values
+    const allValues = tree.getAllCoinValues();
+    expect(allValues.size).toBe(3);
+    expect(allValues.get('aabb')?.toString()).toBe('50');
+    expect(allValues.get('ccdd')?.toString()).toBe('75');
+    expect(allValues.get('eeff')?.toString()).toBe('25');
   });
 
   it('should generate and verify inclusion proofs', async () => {
@@ -84,7 +91,7 @@ describe('SumTree', () => {
     // Check coin data in the proof
     const coinData = verificationResult.coinData;
     expect(coinData).not.toBeNull();
-    expect(coinData!.get('0000')).toBe(100n);
+    expect(coinData!.get('0000')?.toString()).toBe('100');
     
     // Verify with wrong path should fail
     const wrongVerification = await proof.verify(0b1n);
@@ -104,12 +111,15 @@ describe('SumTree', () => {
     await testTree.addLeaf(0b10n, coinData1);
     await testTree.addLeaf(0b11n, coinData2);
     
-    // Check total value at root
-    expect(testTree.getTotalValue()).toBe(300n);
+    // Check individual coin values
+    expect(testTree.getTotalValue(HexConverter.decode('abcd')).toString()).toBe('100');
+    expect(testTree.getTotalValue(HexConverter.decode('ef01')).toString()).toBe('200');
     
-    // Verify individual coin values
-    expect(testTree.getCoinValue(HexConverter.decode('abcd'))).toBe(100n);
-    expect(testTree.getCoinValue(HexConverter.decode('ef01'))).toBe(200n);
+    // Verify that values are kept separate
+    const allValues = testTree.getAllCoinValues();
+    expect(allValues.size).toBe(2);
+    expect(allValues.get('abcd')?.toString()).toBe('100');
+    expect(allValues.get('ef01')?.toString()).toBe('200');
   });
 
   it('should include sibling coin data in proofs', async () => {
@@ -127,6 +137,44 @@ describe('SumTree', () => {
     const step = proof.steps[0];
     expect(step).not.toBeNull();
     expect(step!.siblingCoinData).not.toBeNull();
-    expect(step!.siblingCoinData!.get('ef01')).toBe(200n);
+    expect(step!.siblingCoinData!.get('ef01')?.toString()).toBe('200');
+  });
+  
+  it('should sum values for the same coin ID from different leaves', async () => {
+    // Create a fresh tree for this test
+    const testTree = await SumTree.create(HashAlgorithm.SHA256);
+    
+    // Create leaves with multiple coins including a common coin in both leaves
+    const coinData1 = new Map<string, bigint>();
+    coinData1.set(HexConverter.encode(HexConverter.decode('coin1')), 100n);
+    coinData1.set(HexConverter.encode(HexConverter.decode('common')), 50n);
+    
+    const coinData2 = new Map<string, bigint>();
+    coinData2.set(HexConverter.encode(HexConverter.decode('coin2')), 200n);
+    coinData2.set(HexConverter.encode(HexConverter.decode('common')), 60n);
+    
+    // Add both leaves to the tree
+    await testTree.addLeaf(0b10n, coinData1);
+    await testTree.addLeaf(0b11n, coinData2);
+    
+    // Get the hex-encoded keys
+    const coinKey1 = HexConverter.encode(HexConverter.decode('coin1'));
+    const coinKey2 = HexConverter.encode(HexConverter.decode('coin2'));
+    const commonKey = HexConverter.encode(HexConverter.decode('common'));
+    
+    // Check individual coin values - unique coins have their own values
+    expect(testTree.getTotalValue(HexConverter.decode('coin1')).toString()).toBe('100');
+    expect(testTree.getTotalValue(HexConverter.decode('coin2')).toString()).toBe('200');
+    
+    // The common coin should have its values summed across leaves
+    expect(testTree.getTotalValue(HexConverter.decode('common')).toString()).toBe('110'); // Should be 50n + 60n
+    
+    // Verify the coin data map
+    const allValues = testTree.getAllCoinValues();
+    expect(allValues.size).toBe(3); // 3 distinct coin IDs
+    
+    expect(allValues.get(coinKey1)?.toString()).toBe('100');
+    expect(allValues.get(coinKey2)?.toString()).toBe('200');
+    expect(allValues.get(commonKey)?.toString()).toBe('110');  // For common coins, the values are summed
   });
 });

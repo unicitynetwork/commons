@@ -81,17 +81,22 @@ export class CoinDataUtils {
   }
 
   /**
-   * Merges two CoinDataMaps
+   * Merges two CoinDataMaps, summing values for the same coin ID
    * @param {CoinDataMap} map1 - First map
    * @param {CoinDataMap} map2 - Second map
-   * @returns {CoinDataMap} Merged map
+   * @returns {CoinDataMap} Merged map with summed values for the same coin IDs
    */
   public static mergeMaps(map1: CoinDataMap, map2: CoinDataMap): CoinDataMap {
     const result = new Map<string, bigint>(map1);
+    
+    // For each coin in map2, add its value to any existing value in map1
+    // This ensures we sum values for the same coin IDs across different leaves
     for (const [key, value] of map2.entries()) {
       const existingValue = result.get(key) || 0n;
       result.set(key, existingValue + value);
     }
+    
     return result;
   }
+  
 }
