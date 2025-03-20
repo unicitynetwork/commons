@@ -3,7 +3,9 @@ import { sha1 } from '@noble/hashes/sha1';
 import { sha224, sha256 } from '@noble/hashes/sha256';
 import { sha384, sha512 } from '@noble/hashes/sha512';
 
+import { HashAlgorithm } from './HashAlgorithm.js';
 import { IDataHasher } from './IDataHasher.js';
+import { UnsupportedHashAlgorithm } from './UnsupportedHashAlgorithm.js';
 
 interface IMessageDigest {
   update(buf: Uint8Array): this;
@@ -13,18 +15,13 @@ interface IMessageDigest {
   destroy(): void;
 }
 
-export interface IHashAlgorithm {
-  readonly name: string;
-  create(): IMessageDigest;
-}
-
-export const HashAlgorithm = {
-  RIPEMD160: { create: ripemd160.create, name: 'RIPEMD160' },
-  SHA1: { create: sha1.create, name: 'SHA-1' },
-  SHA224: { create: sha224.create, name: 'SHA-224' },
-  SHA256: { create: sha256.create, name: 'SHA-256' },
-  SHA384: { create: sha384.create, name: 'SHA-384' },
-  SHA512: { create: sha512.create, name: 'SHA-512' },
+export const Algorithm = {
+  [HashAlgorithm.RIPEMD160]: ripemd160,
+  [HashAlgorithm.SHA1]: sha1,
+  [HashAlgorithm.SHA224]: sha224,
+  [HashAlgorithm.SHA256]: sha256,
+  [HashAlgorithm.SHA384]: sha384,
+  [HashAlgorithm.SHA512]: sha512,
 };
 
 /**
@@ -35,18 +32,14 @@ export class DataHasher implements IDataHasher {
 
   /**
    * Create DataHasher instance the hash algorithm
-   * @param {IHashAlgorithm} _algorithm
+   * @param {HashAlgorithm} algorithm
    */
-  public constructor(private readonly _algorithm: IHashAlgorithm) {
-    this._messageDigest = _algorithm.create();
-  }
+  public constructor(public readonly algorithm: HashAlgorithm) {
+    if (!Algorithm[algorithm]) {
+      throw new UnsupportedHashAlgorithm(algorithm);
+    }
 
-  /**
-   * Get hasher algorithm
-   * @return {string}
-   */
-  public get algorithm(): string {
-    return this._algorithm.name;
+    this._messageDigest = Algorithm[algorithm].create();
   }
 
   /**
@@ -68,7 +61,7 @@ export class DataHasher implements IDataHasher {
   }
 
   public reset(): this {
-    this._messageDigest = this._algorithm.create();
+    this._messageDigest = Algorithm[this.algorithm].create();
     return this;
   }
 }

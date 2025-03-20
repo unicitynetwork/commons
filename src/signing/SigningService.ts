@@ -1,7 +1,8 @@
 import { secp256k1 } from '@noble/curves/secp256k1';
 
 import { ISigningService } from './ISigningService.js';
-import { DataHasher, HashAlgorithm } from '../hash/DataHasher.js';
+import { DataHasher } from '../hash/DataHasher.js';
+import { HashAlgorithm } from '../hash/HashAlgorithm.js';
 
 /**
  * Default signing service.

@@ -1,4 +1,5 @@
-import { DataHasher, HashAlgorithm } from '../hash/DataHasher.js';
+import { DataHasher } from '../hash/DataHasher.js';
+import { HashAlgorithm } from '../hash/HashAlgorithm.js';
 import { HexConverter } from '../util/HexConverter.js';
 
 export class RequestId {
@@ -10,8 +11,8 @@ export class RequestId {
     return new Uint8Array(this._hash);
   }
 
-  public get hashAlgorithm(): string {
-    return HashAlgorithm.SHA256.name;
+  public get hashAlgorithm(): HashAlgorithm {
+    return HashAlgorithm.SHA256;
   }
 
   public static async create(id: Uint8Array, stateHash: Uint8Array): Promise<RequestId> {

@@ -1,11 +1,15 @@
+import { HashAlgorithm } from './HashAlgorithm.js';
 import { IDataHasher } from './IDataHasher.js';
+import { UnsupportedHashAlgorithm } from './UnsupportedHashAlgorithm.js';
 
-export enum HashAlgorithm {
-  SHA1 = 'SHA-1',
-  SHA256 = 'SHA-256',
-  SHA384 = 'SHA-384',
-  SHA512 = 'SHA-512',
-}
+export const Algorithm = {
+  [HashAlgorithm.RIPEMD160]: null,
+  [HashAlgorithm.SHA1]: 'SHA-1',
+  [HashAlgorithm.SHA224]: null,
+  [HashAlgorithm.SHA256]: 'SHA-256',
+  [HashAlgorithm.SHA384]: 'SHA-384',
+  [HashAlgorithm.SHA512]: 'SHA-512',
+};
 
 /**
  * Does hashing with asynchronous way
@@ -18,6 +22,10 @@ export class SubtleCryptoDataHasher implements IDataHasher {
    * @param {string} algorithm
    */
   public constructor(public readonly algorithm: HashAlgorithm) {
+    if (!Algorithm[algorithm]) {
+      throw new UnsupportedHashAlgorithm(algorithm);
+    }
+
     this._data = new Uint8Array(0);
   }
 
@@ -40,7 +48,7 @@ export class SubtleCryptoDataHasher implements IDataHasher {
    * @returns Promise.<DataHash, Error>
    */
   public async digest(): Promise<Uint8Array> {
-    return new Uint8Array(await window.crypto.subtle.digest({ name: this.algorithm }, this._data));
+    return new Uint8Array(await window.crypto.subtle.digest({ name: Algorithm[this.algorithm] as string }, this._data));
   }
 
   /**

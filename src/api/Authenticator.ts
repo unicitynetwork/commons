@@ -1,3 +1,5 @@
+import { HashAlgorithm } from '../hash/HashAlgorithm.js';
+import { SigningService } from '../signing/SigningService';
 import { HexConverter } from '../util/HexConverter.js';
 import { dedent } from '../util/StringUtils.js';
 
@@ -6,12 +8,12 @@ export interface IAuthenticatorDto {
   publicKey: string;
   algorithm: string;
   signature: string;
-  state: string;
+  stateHash: string;
 }
 
 export class Authenticator {
   public constructor(
-    public readonly hashAlgorithm: string,
+    public readonly hashAlgorithm: HashAlgorithm,
     private readonly _publicKey: Uint8Array,
     public readonly algorithm: string,
     private readonly _signature: Uint8Array,
@@ -30,7 +32,7 @@ export class Authenticator {
     return new Uint8Array(this._signature);
   }
 
-  public get state(): Uint8Array {
+  public get stateHash(): Uint8Array {
     return new Uint8Array(this._stateHash);
   }
 
@@ -40,11 +42,11 @@ export class Authenticator {
     }
 
     return new Authenticator(
-      data.hashAlgorithm,
+      data.hashAlgorithm as HashAlgorithm,
       HexConverter.decode(data.publicKey),
       data.algorithm,
       HexConverter.decode(data.signature),
-      HexConverter.decode(data.state),
+      HexConverter.decode(data.stateHash),
     );
   }
 
@@ -53,14 +55,15 @@ export class Authenticator {
       data instanceof Object &&
       'hashAlgorithm' in data &&
       typeof data.hashAlgorithm === 'string' &&
+      HashAlgorithm[data.hashAlgorithm as keyof typeof HashAlgorithm] &&
       'publicKey' in data &&
       typeof data.publicKey === 'string' &&
       'algorithm' in data &&
       typeof data.algorithm === 'string' &&
       'signature' in data &&
       typeof data.signature === 'string' &&
-      'state' in data &&
-      typeof data.state === 'string'
+      'stateHash' in data &&
+      typeof data.stateHash === 'string'
     );
   }
 
@@ -70,8 +73,12 @@ export class Authenticator {
       hashAlgorithm: this.hashAlgorithm,
       publicKey: HexConverter.encode(this.publicKey),
       signature: HexConverter.encode(this.signature),
-      state: HexConverter.encode(this.state),
+      stateHash: HexConverter.encode(this.stateHash),
     };
+  }
+
+  public verify(transactionHash: Uint8Array): Promise<boolean> {
+    return SigningService.verifyWithPublicKey(this.publicKey, transactionHash, this.signature);
   }
 
   public toString(): string {

@@ -1,5 +1,6 @@
 import { createHash, Hash } from 'crypto';
 
+import { HashAlgorithm } from './HashAlgorithm.js';
 import { IDataHasher } from './IDataHasher.js';
 
 export class NodeDataHasher implements IDataHasher {
@@ -9,8 +10,8 @@ export class NodeDataHasher implements IDataHasher {
    * Create Node Hasher
    * @param {string} algorithm
    */
-  public constructor(public readonly algorithm: string) {
-    this._hasher = createHash(this.algorithm.replace('-', ''));
+  public constructor(public readonly algorithm: HashAlgorithm) {
+    this._hasher = createHash(this.algorithm);
   }
 
   /**
@@ -37,7 +38,7 @@ export class NodeDataHasher implements IDataHasher {
    * @return {IDataHasher}
    */
   public reset(): this {
-    this._hasher = createHash(this.algorithm.replace('-', ''));
+    this._hasher = createHash(this.algorithm);
 
     return this;
   }

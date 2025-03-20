@@ -1,5 +1,6 @@
 import { Authenticator, IAuthenticatorDto } from './Authenticator.js';
-import { DataHasher, HashAlgorithm } from '../hash/DataHasher.js';
+import { DataHasher } from '../hash/DataHasher.js';
+import { HashAlgorithm } from '../hash/HashAlgorithm.js';
 import { SigningService } from '../signing/SigningService.js';
 import { IMerkleTreePathDto, MerkleTreePath } from '../smt/MerkleTreePath.js';
 import { HexConverter } from '../util/HexConverter.js';
@@ -8,7 +9,7 @@ import { dedent } from '../util/StringUtils.js';
 export interface IInclusionProofDto {
   merkleTreePath: IMerkleTreePathDto;
   authenticator: IAuthenticatorDto;
-  payload: string;
+  transactionHash: string;
 }
 
 export enum InclusionProofVerificationStatus {
@@ -22,13 +23,13 @@ export class InclusionProof {
   public constructor(
     public readonly merkleTreePath: MerkleTreePath,
     public readonly authenticator: Authenticator,
-    private readonly _payload: Uint8Array,
+    private readonly _transactionHash: Uint8Array,
   ) {
-    this._payload = new Uint8Array(_payload);
+    this._transactionHash = new Uint8Array(_transactionHash);
   }
 
-  public get payload(): Uint8Array {
-    return new Uint8Array(this._payload);
+  public get transactionHash(): Uint8Array {
+    return new Uint8Array(this._transactionHash);
   }
 
   public static fromDto(data: unknown): InclusionProof {
@@ -39,7 +40,7 @@ export class InclusionProof {
     return new InclusionProof(
       MerkleTreePath.fromDto(data.merkleTreePath),
       Authenticator.fromDto(data.authenticator),
-      HexConverter.decode(data.payload),
+      HexConverter.decode(data.transactionHash),
     );
   }
 
@@ -48,8 +49,8 @@ export class InclusionProof {
       data instanceof Object &&
       'merkleTreePath' in data &&
       'authenticator' in data &&
-      'payload' in data &&
-      typeof data.payload === 'string'
+      'transactionHash' in data &&
+      typeof data.transactionHash === 'string'
     );
   }
 
@@ -57,18 +58,12 @@ export class InclusionProof {
     return {
       authenticator: this.authenticator.toDto(),
       merkleTreePath: this.merkleTreePath.toDto(),
-      payload: HexConverter.encode(this.payload),
+      transactionHash: HexConverter.encode(this.transactionHash),
     };
   }
 
   public async verify(requestId: bigint): Promise<InclusionProofVerificationStatus> {
-    if (
-      !(await SigningService.verifyWithPublicKey(
-        this.authenticator.publicKey,
-        this.payload as Uint8Array,
-        this.authenticator.signature,
-      ))
-    ) {
+    if (!(await this.authenticator.verify(this.transactionHash))) {
       return InclusionProofVerificationStatus.NOT_AUTHENTICATED;
     }
 
@@ -77,7 +72,7 @@ export class InclusionProof {
         new TextEncoder().encode(
           JSON.stringify({
             authenticator: this.authenticator,
-            payload: this.payload,
+            transactionHash: this.transactionHash,
           }),
         ),
       )
@@ -106,6 +101,6 @@ export class InclusionProof {
       Inclusion Proof
         ${this.merkleTreePath.toString()}
         ${this.authenticator.toString()}
-        Payload: ${HexConverter.encode(this._payload)}`;
+        Payload: ${HexConverter.encode(this._transactionHash)}`;
   }
 }
