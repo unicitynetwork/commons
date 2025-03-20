@@ -5,7 +5,7 @@ import { sha384, sha512 } from '@noble/hashes/sha512';
 
 import { HashAlgorithm } from './HashAlgorithm.js';
 import { IDataHasher } from './IDataHasher.js';
-import { UnsupportedHashAlgorithm } from './UnsupportedHashAlgorithm.js';
+import { UnsupportedHashAlgorithmError } from './UnsupportedHashAlgorithmError.js';
 
 interface IMessageDigest {
   update(buf: Uint8Array): this;
@@ -36,7 +36,7 @@ export class DataHasher implements IDataHasher {
    */
   public constructor(public readonly algorithm: HashAlgorithm) {
     if (!Algorithm[algorithm]) {
-      throw new UnsupportedHashAlgorithm(algorithm);
+      throw new UnsupportedHashAlgorithmError(algorithm);
     }
 
     this._messageDigest = Algorithm[algorithm].create();

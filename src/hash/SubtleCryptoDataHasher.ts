@@ -1,6 +1,6 @@
 import { HashAlgorithm } from './HashAlgorithm.js';
 import { IDataHasher } from './IDataHasher.js';
-import { UnsupportedHashAlgorithm } from './UnsupportedHashAlgorithm.js';
+import { UnsupportedHashAlgorithmError } from './UnsupportedHashAlgorithmError.js';
 
 export const Algorithm = {
   [HashAlgorithm.RIPEMD160]: null,
@@ -23,7 +23,7 @@ export class SubtleCryptoDataHasher implements IDataHasher {
    */
   public constructor(public readonly algorithm: HashAlgorithm) {
     if (!Algorithm[algorithm]) {
-      throw new UnsupportedHashAlgorithm(algorithm);
+      throw new UnsupportedHashAlgorithmError(algorithm);
     }
 
     this._data = new Uint8Array(0);

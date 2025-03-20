@@ -1,5 +1,5 @@
 import { HashAlgorithm } from '../hash/HashAlgorithm.js';
-import { SigningService } from '../signing/SigningService';
+import { SigningService } from '../signing/SigningService.js';
 import { HexConverter } from '../util/HexConverter.js';
 import { dedent } from '../util/StringUtils.js';
 

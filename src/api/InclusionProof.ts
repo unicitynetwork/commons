@@ -1,7 +1,6 @@
 import { Authenticator, IAuthenticatorDto } from './Authenticator.js';
 import { DataHasher } from '../hash/DataHasher.js';
 import { HashAlgorithm } from '../hash/HashAlgorithm.js';
-import { SigningService } from '../signing/SigningService.js';
 import { IMerkleTreePathDto, MerkleTreePath } from '../smt/MerkleTreePath.js';
 import { HexConverter } from '../util/HexConverter.js';
 import { dedent } from '../util/StringUtils.js';
