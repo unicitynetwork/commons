@@ -4,13 +4,13 @@ import { MerkleTreePath } from './MerkleTreePath.js';
 import { MerkleTreePathStep } from './MerkleTreePathStep.js';
 import { NodeBranch } from './NodeBranch.js';
 import { RootNode } from './RootNode.js';
-import { IHashAlgorithm } from '../hash/DataHasher.js';
+import { HashAlgorithm } from '../hash/HashAlgorithm.js';
 
 type CommonPath = { length: bigint; path: bigint };
 
 export class SparseMerkleTree {
   public constructor(
-    public readonly algorithm: IHashAlgorithm,
+    public readonly algorithm: HashAlgorithm,
     private root: RootNode,
   ) {}
 
@@ -18,7 +18,7 @@ export class SparseMerkleTree {
     return this.root.hash;
   }
 
-  public static async create(algorithm: IHashAlgorithm): Promise<SparseMerkleTree> {
+  public static async create(algorithm: HashAlgorithm): Promise<SparseMerkleTree> {
     return new SparseMerkleTree(algorithm, await RootNode.create(algorithm, null, null));
   }
 

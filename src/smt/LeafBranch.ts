@@ -1,4 +1,5 @@
-import { DataHasher, IHashAlgorithm } from '../hash/DataHasher.js';
+import { DataHasher } from '../hash/DataHasher.js';
+import { HashAlgorithm } from '../hash/HashAlgorithm.js';
 import { BigintConverter } from '../util/BigintConverter.js';
 import { HexConverter } from '../util/HexConverter.js';
 import { dedent } from '../util/StringUtils.js';
@@ -21,7 +22,7 @@ export class LeafBranch {
     return new Uint8Array(this._hash);
   }
 
-  public static async create(algorithm: IHashAlgorithm, path: bigint, value: Uint8Array): Promise<LeafBranch> {
+  public static async create(algorithm: HashAlgorithm, path: bigint, value: Uint8Array): Promise<LeafBranch> {
     const hash = await new DataHasher(algorithm).update(BigintConverter.encode(path)).update(value).digest();
     return new LeafBranch(path, value, hash);
   }

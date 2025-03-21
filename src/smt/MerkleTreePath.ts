@@ -1,5 +1,6 @@
 import { IMerkleTreePathStepDto, MerkleTreePathStep } from './MerkleTreePathStep.js';
-import { DataHasher, HashAlgorithm } from '../hash/DataHasher.js';
+import { DataHasher } from '../hash/DataHasher.js';
+import { HashAlgorithm } from '../hash/HashAlgorithm.js';
 import { BigintConverter } from '../util/BigintConverter.js';
 import { HexConverter } from '../util/HexConverter.js';
 import { dedent } from '../util/StringUtils.js';

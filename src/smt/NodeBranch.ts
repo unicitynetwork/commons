@@ -1,5 +1,6 @@
 import { Branch } from './Branch.js';
-import { DataHasher, IHashAlgorithm } from '../hash/DataHasher.js';
+import { DataHasher } from '../hash/DataHasher.js';
+import { HashAlgorithm } from '../hash/HashAlgorithm.js';
 import { BigintConverter } from '../util/BigintConverter.js';
 import { dedent } from '../util/StringUtils.js';
 
@@ -17,12 +18,7 @@ export class NodeBranch {
     return new Uint8Array(this._hash);
   }
 
-  public static async create(
-    algorithm: IHashAlgorithm,
-    path: bigint,
-    left: Branch,
-    right: Branch,
-  ): Promise<NodeBranch> {
+  public static async create(algorithm: HashAlgorithm, path: bigint, left: Branch, right: Branch): Promise<NodeBranch> {
     const hash = await new DataHasher(algorithm)
       .update(left?.hash ?? new Uint8Array(1))
       .update(right?.hash ?? new Uint8Array(1))

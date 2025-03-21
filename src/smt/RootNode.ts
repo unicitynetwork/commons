@@ -1,5 +1,6 @@
 import { Branch } from './Branch.js';
-import { DataHasher, IHashAlgorithm } from '../hash/DataHasher.js';
+import { DataHasher } from '../hash/DataHasher.js';
+import { HashAlgorithm } from '../hash/HashAlgorithm.js';
 import { dedent } from '../util/StringUtils.js';
 
 export class RootNode {
@@ -17,7 +18,7 @@ export class RootNode {
     return new Uint8Array(this._hash);
   }
 
-  public static async create(algorithm: IHashAlgorithm, left: Branch | null, right: Branch | null): Promise<RootNode> {
+  public static async create(algorithm: HashAlgorithm, left: Branch | null, right: Branch | null): Promise<RootNode> {
     const hash = await new DataHasher(algorithm)
       .update(left?.hash ?? new Uint8Array(1))
       .update(right?.hash ?? new Uint8Array(1))
