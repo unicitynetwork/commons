@@ -1,3 +1,4 @@
+import { DataHash } from '../hash/DataHash.js';
 import { DataHasher } from '../hash/DataHasher.js';
 import { HashAlgorithm } from '../hash/HashAlgorithm.js';
 import { BigintConverter } from '../util/BigintConverter.js';
@@ -8,18 +9,13 @@ export class LeafBranch {
   public constructor(
     public readonly path: bigint,
     private readonly _value: Uint8Array,
-    private readonly _hash: Uint8Array,
+    public readonly hash: DataHash,
   ) {
     this._value = new Uint8Array(_value);
-    this._hash = new Uint8Array(_hash);
   }
 
   public get value(): Uint8Array {
     return new Uint8Array(this._value);
-  }
-
-  public get hash(): Uint8Array {
-    return new Uint8Array(this._hash);
   }
 
   public static async create(algorithm: HashAlgorithm, path: bigint, value: Uint8Array): Promise<LeafBranch> {
@@ -30,7 +26,7 @@ export class LeafBranch {
   public toString(): string {
     return dedent`
       Branch[${this.path.toString(2)}]
-        Hash: ${HexConverter.encode(this._hash)} 
+        Hash: ${this.hash.toString()} 
         Value: ${HexConverter.encode(this._value)}`;
   }
 }

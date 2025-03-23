@@ -1,10 +1,10 @@
+import { DataHash } from './DataHash.js';
 import { HashAlgorithm } from './HashAlgorithm.js';
 import { IDataHasher } from './IDataHasher.js';
 import { UnsupportedHashAlgorithmError } from './UnsupportedHashAlgorithmError.js';
 
 export const Algorithm = {
   [HashAlgorithm.RIPEMD160]: null,
-  [HashAlgorithm.SHA1]: 'SHA-1',
   [HashAlgorithm.SHA224]: null,
   [HashAlgorithm.SHA256]: 'SHA-256',
   [HashAlgorithm.SHA384]: 'SHA-384',
@@ -47,8 +47,11 @@ export class SubtleCryptoDataHasher implements IDataHasher {
    * Create hashing Promise for getting result DataHash
    * @returns Promise.<DataHash, Error>
    */
-  public async digest(): Promise<Uint8Array> {
-    return new Uint8Array(await window.crypto.subtle.digest({ name: Algorithm[this.algorithm] as string }, this._data));
+  public async digest(): Promise<DataHash> {
+    return new DataHash(
+      this.algorithm,
+      new Uint8Array(await window.crypto.subtle.digest({ name: Algorithm[this.algorithm] as string }, this._data)),
+    );
   }
 
   /**

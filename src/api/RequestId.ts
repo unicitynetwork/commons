@@ -11,12 +11,9 @@ export class RequestId {
     return new Uint8Array(this._hash);
   }
 
-  public get hashAlgorithm(): HashAlgorithm {
-    return HashAlgorithm.SHA256;
-  }
-
   public static async create(id: Uint8Array, stateHash: Uint8Array): Promise<RequestId> {
-    return new RequestId(await new DataHasher(HashAlgorithm.SHA256).update(id).update(stateHash).digest());
+    const hash = await new DataHasher(HashAlgorithm.SHA256).update(id).update(stateHash).digest();
+    return new RequestId(hash.imprint);
   }
 
   public static createFromBytes(data: Uint8Array): RequestId {

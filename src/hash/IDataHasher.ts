@@ -1,7 +1,10 @@
+import { DataHash } from './DataHash.js';
+import { HashAlgorithm } from './HashAlgorithm.js';
+
 export interface IDataHasher {
-  readonly algorithm: string;
+  readonly algorithm: HashAlgorithm;
 
   update(data: Uint8Array): this;
-  digest(): Promise<Uint8Array>;
+  digest(): Promise<DataHash>;
   reset(): this;
 }

@@ -1,4 +1,5 @@
 import { Branch } from './Branch.js';
+import { DataHash } from '../hash/DataHash.js';
 import { DataHasher } from '../hash/DataHasher.js';
 import { HashAlgorithm } from '../hash/HashAlgorithm.js';
 import { BigintConverter } from '../util/BigintConverter.js';
@@ -9,27 +10,18 @@ export class NodeBranch {
     public readonly path: bigint,
     public readonly left: Branch,
     public readonly right: Branch,
-    private readonly _hash: Uint8Array,
-  ) {
-    this._hash = new Uint8Array(_hash);
-  }
-
-  public get hash(): Uint8Array {
-    return new Uint8Array(this._hash);
-  }
+    public readonly hash: DataHash,
+  ) {}
 
   public static async create(algorithm: HashAlgorithm, path: bigint, left: Branch, right: Branch): Promise<NodeBranch> {
-    const hash = await new DataHasher(algorithm)
-      .update(left?.hash ?? new Uint8Array(1))
-      .update(right?.hash ?? new Uint8Array(1))
+    const childHash = await new DataHasher(algorithm)
+      .update(left?.hash.data ?? new Uint8Array(1))
+      .update(right?.hash.data ?? new Uint8Array(1))
       .digest();
 
-    return new NodeBranch(
-      path,
-      left,
-      right,
-      await new DataHasher(algorithm).update(BigintConverter.encode(path)).update(hash).digest(),
-    );
+    const hash = await new DataHasher(algorithm).update(BigintConverter.encode(path)).update(childHash.data).digest();
+
+    return new NodeBranch(path, left, right, hash);
   }
 
   public toString(): string {

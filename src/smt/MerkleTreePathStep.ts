@@ -1,6 +1,7 @@
 import { Branch } from './Branch.js';
 import { LeafBranch } from './LeafBranch.js';
 import { NodeBranch } from './NodeBranch.js';
+import { DataHash } from '../hash/DataHash.js';
 import { HexConverter } from '../util/HexConverter.js';
 import { dedent } from '../util/StringUtils.js';
 
@@ -11,29 +12,24 @@ export interface IMerkleTreePathStepDto {
 }
 
 export class MerkleTreePathStep {
-  public constructor(
+  private constructor(
     public readonly path: bigint,
+    public readonly sibling: DataHash | null,
     private readonly _value: Uint8Array | null,
-    private readonly _sibling: Uint8Array | null,
   ) {
     this._value = _value ? new Uint8Array(_value) : null;
-    this._sibling = _sibling ? new Uint8Array(_sibling) : null;
   }
 
   public get value(): Uint8Array | null {
-    return this._value;
-  }
-
-  public get sibling(): Uint8Array | null {
-    return this._sibling;
+    return this._value ? new Uint8Array(this._value) : null;
   }
 
   public static createFromLeaf(branch: LeafBranch, sibling: Branch | null): MerkleTreePathStep {
-    return new MerkleTreePathStep(branch.path, branch.value, sibling?.hash ?? null);
+    return new MerkleTreePathStep(branch.path, sibling?.hash ?? null, branch.value);
   }
 
   public static createFromBranch(branch: NodeBranch, sibling: Branch | null): MerkleTreePathStep {
-    return new MerkleTreePathStep(branch.path, null, sibling?.hash ?? null);
+    return new MerkleTreePathStep(branch.path, sibling?.hash ?? null, null);
   }
 
   public static fromDto(data: unknown): MerkleTreePathStep {
@@ -43,8 +39,8 @@ export class MerkleTreePathStep {
 
     return new MerkleTreePathStep(
       BigInt(data.path),
+      data.sibling == null ? null : DataHash.fromDto(data.sibling),
       data.value == null ? null : HexConverter.decode(data.value),
-      data.sibling == null ? null : HexConverter.decode(data.sibling),
     );
   }
 
@@ -63,7 +59,7 @@ export class MerkleTreePathStep {
   public toDto(): IMerkleTreePathStepDto {
     return {
       path: this.path.toString(),
-      sibling: this.sibling ? HexConverter.encode(this.sibling) : undefined,
+      sibling: this.sibling?.toDto(),
       value: this.value ? HexConverter.encode(this.value) : undefined,
     };
   }
@@ -73,6 +69,6 @@ export class MerkleTreePathStep {
       Merkle Tree Path Step
         Path: ${this.path}
         Value: ${this._value ? HexConverter.encode(this._value) : 'null'}
-        Sibling: ${this._sibling ? HexConverter.encode(this._sibling) : 'null'}`;
+        Sibling: ${this.sibling?.toString() ?? 'null'}`;
   }
 }

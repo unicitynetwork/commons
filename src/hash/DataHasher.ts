@@ -1,8 +1,8 @@
 import { ripemd160 } from '@noble/hashes/ripemd160';
-import { sha1 } from '@noble/hashes/sha1';
 import { sha224, sha256 } from '@noble/hashes/sha256';
 import { sha384, sha512 } from '@noble/hashes/sha512';
 
+import { DataHash } from './DataHash.js';
 import { HashAlgorithm } from './HashAlgorithm.js';
 import { IDataHasher } from './IDataHasher.js';
 import { UnsupportedHashAlgorithmError } from './UnsupportedHashAlgorithmError.js';
@@ -17,7 +17,6 @@ interface IMessageDigest {
 
 export const Algorithm = {
   [HashAlgorithm.RIPEMD160]: ripemd160,
-  [HashAlgorithm.SHA1]: sha1,
   [HashAlgorithm.SHA224]: sha224,
   [HashAlgorithm.SHA256]: sha256,
   [HashAlgorithm.SHA384]: sha384,
@@ -56,8 +55,8 @@ export class DataHasher implements IDataHasher {
    * Hashes the data and returns the DataHash
    * @returns DataHash
    */
-  public digest(): Promise<Uint8Array> {
-    return Promise.resolve(this._messageDigest.digest());
+  public digest(): Promise<DataHash> {
+    return Promise.resolve(new DataHash(this.algorithm, this._messageDigest.digest()));
   }
 
   public reset(): this {

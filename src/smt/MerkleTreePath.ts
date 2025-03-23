@@ -1,8 +1,8 @@
 import { IMerkleTreePathStepDto, MerkleTreePathStep } from './MerkleTreePathStep.js';
+import { DataHash } from '../hash/DataHash.js';
 import { DataHasher } from '../hash/DataHasher.js';
 import { HashAlgorithm } from '../hash/HashAlgorithm.js';
 import { BigintConverter } from '../util/BigintConverter.js';
-import { HexConverter } from '../util/HexConverter.js';
 import { dedent } from '../util/StringUtils.js';
 
 export interface IMerkleTreePathDto {
@@ -23,15 +23,9 @@ export class MerkleTreePathVerificationResult {
 
 export class MerkleTreePath {
   public constructor(
-    private readonly _root: Uint8Array,
+    public readonly root: DataHash,
     public readonly steps: ReadonlyArray<MerkleTreePathStep | null>,
-  ) {
-    this._root = new Uint8Array(_root);
-  }
-
-  public get root(): Uint8Array {
-    return new Uint8Array(this._root);
-  }
+  ) {}
 
   public static fromDto(data: unknown): MerkleTreePath {
     if (!MerkleTreePath.isDto(data)) {
@@ -39,7 +33,7 @@ export class MerkleTreePath {
     }
 
     return new MerkleTreePath(
-      HexConverter.decode(data.root),
+      DataHash.fromDto(data.root),
       data.steps.map((step: unknown) => MerkleTreePathStep.fromDto(step)),
     );
   }
@@ -56,7 +50,7 @@ export class MerkleTreePath {
 
   public toDto(): IMerkleTreePathDto {
     return {
-      root: HexConverter.encode(this.root),
+      root: this.root.toDto(),
       steps: this.steps.map((step) => (step ? step.toDto() : null)),
     };
   }
@@ -64,7 +58,7 @@ export class MerkleTreePath {
   // TODO: Revisit verification logic at some point
   public async verify(requestId: bigint): Promise<MerkleTreePathVerificationResult> {
     let currentPath = 1n;
-    let currentHash: Uint8Array | null = null;
+    let currentHash: DataHash | null = null;
 
     for (const step of this.steps) {
       if (step == null) {
@@ -72,7 +66,7 @@ export class MerkleTreePath {
         continue;
       }
 
-      let hash: Uint8Array;
+      let hash: DataHash;
       if (step.value) {
         hash = await new DataHasher(HashAlgorithm.SHA256)
           .update(BigintConverter.encode(step.path))
@@ -81,22 +75,22 @@ export class MerkleTreePath {
       } else {
         hash = await new DataHasher(HashAlgorithm.SHA256)
           .update(BigintConverter.encode(step.path))
-          .update(currentHash ?? new Uint8Array(1))
+          .update(currentHash?.data ?? new Uint8Array(1))
           .digest();
       }
 
-      const siblingHash = step.sibling ?? new Uint8Array(1);
+      const siblingHash = step.sibling?.data ?? new Uint8Array(1);
       const isRight = step.path & 1n;
       currentHash = await new DataHasher(HashAlgorithm.SHA256)
-        .update(isRight ? siblingHash : hash)
-        .update(isRight ? hash : siblingHash)
+        .update(isRight ? siblingHash : hash.data)
+        .update(isRight ? hash.data : siblingHash)
         .digest();
       const length = BigInt(step.path.toString(2).length - 1);
       currentPath = (currentPath << length) | (step.path & ((1n << length) - 1n));
     }
 
     return new MerkleTreePathVerificationResult(
-      !!currentHash && HexConverter.encode(currentHash) === HexConverter.encode(this.root),
+      !!currentHash && this.root.equals(currentHash),
       requestId === currentPath,
     );
   }
@@ -104,7 +98,9 @@ export class MerkleTreePath {
   public toString(): string {
     return dedent`
       Merkle Tree Path
-        Root: ${HexConverter.encode(this._root)} 
-        Steps: [\n${this.steps.map((step: MerkleTreePathStep | null) => step?.toString() ?? 'null').join('\n')}\n]`;
+        Root: ${this.root.toString()} 
+        Steps: [
+          ${this.steps.map((step: MerkleTreePathStep | null) => step?.toString() ?? 'null').join('\n')}
+        ]`;
   }
 }

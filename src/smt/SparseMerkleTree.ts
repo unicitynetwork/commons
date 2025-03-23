@@ -4,6 +4,7 @@ import { MerkleTreePath } from './MerkleTreePath.js';
 import { MerkleTreePathStep } from './MerkleTreePathStep.js';
 import { NodeBranch } from './NodeBranch.js';
 import { RootNode } from './RootNode.js';
+import { DataHash } from '../hash/DataHash.js';
 import { HashAlgorithm } from '../hash/HashAlgorithm.js';
 
 type CommonPath = { length: bigint; path: bigint };
@@ -14,7 +15,7 @@ export class SparseMerkleTree {
     private root: RootNode,
   ) {}
 
-  public get rootHash(): Uint8Array {
+  public get rootHash(): DataHash {
     return this.root.hash;
   }
 

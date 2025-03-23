@@ -1,7 +1,16 @@
 import { createHash, Hash } from 'crypto';
 
+import { DataHash } from './DataHash.js';
 import { HashAlgorithm } from './HashAlgorithm.js';
 import { IDataHasher } from './IDataHasher.js';
+
+export const Algorithm = {
+  [HashAlgorithm.RIPEMD160]: 'RIPEMD160',
+  [HashAlgorithm.SHA224]: 'SHA224',
+  [HashAlgorithm.SHA256]: 'SHA256',
+  [HashAlgorithm.SHA384]: 'SHA384',
+  [HashAlgorithm.SHA512]: 'SHA512',
+};
 
 export class NodeDataHasher implements IDataHasher {
   private _hasher: Hash;
@@ -11,15 +20,15 @@ export class NodeDataHasher implements IDataHasher {
    * @param {string} algorithm
    */
   public constructor(public readonly algorithm: HashAlgorithm) {
-    this._hasher = createHash(this.algorithm);
+    this._hasher = createHash(Algorithm[this.algorithm]);
   }
 
   /**
    * Digest the final result
    * @return {Promise<Uint8Array>}
    */
-  public digest(): Promise<Uint8Array> {
-    return Promise.resolve(new Uint8Array(this._hasher.digest()));
+  public digest(): Promise<DataHash> {
+    return Promise.resolve(new DataHash(this.algorithm, this._hasher.digest()));
   }
 
   /**
@@ -38,7 +47,7 @@ export class NodeDataHasher implements IDataHasher {
    * @return {IDataHasher}
    */
   public reset(): this {
-    this._hasher = createHash(this.algorithm);
+    this._hasher = createHash(Algorithm[this.algorithm]);
 
     return this;
   }

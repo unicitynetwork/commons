@@ -78,7 +78,8 @@ export class InclusionProof {
       .digest();
 
     if (
-      HexConverter.encode(hash) !== HexConverter.encode(this.merkleTreePath.steps.at(-1)?.value ?? new Uint8Array())
+      HexConverter.encode(hash.imprint) !==
+      HexConverter.encode(this.merkleTreePath.steps.at(-1)?.value ?? new Uint8Array())
     ) {
       return InclusionProofVerificationStatus.NOT_INCLUDED;
     }

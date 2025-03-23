@@ -1,10 +1,8 @@
-import { HashAlgorithm } from '../hash/HashAlgorithm.js';
 import { SigningService } from '../signing/SigningService.js';
 import { HexConverter } from '../util/HexConverter.js';
 import { dedent } from '../util/StringUtils.js';
 
 export interface IAuthenticatorDto {
-  hashAlgorithm: string;
   publicKey: string;
   algorithm: string;
   signature: string;
@@ -13,7 +11,6 @@ export interface IAuthenticatorDto {
 
 export class Authenticator {
   public constructor(
-    public readonly hashAlgorithm: HashAlgorithm,
     private readonly _publicKey: Uint8Array,
     public readonly algorithm: string,
     private readonly _signature: Uint8Array,
@@ -42,7 +39,6 @@ export class Authenticator {
     }
 
     return new Authenticator(
-      data.hashAlgorithm as HashAlgorithm,
       HexConverter.decode(data.publicKey),
       data.algorithm,
       HexConverter.decode(data.signature),
@@ -53,9 +49,6 @@ export class Authenticator {
   public static isDto(data: unknown): data is IAuthenticatorDto {
     return (
       data instanceof Object &&
-      'hashAlgorithm' in data &&
-      typeof data.hashAlgorithm === 'string' &&
-      HashAlgorithm[data.hashAlgorithm as keyof typeof HashAlgorithm] &&
       'publicKey' in data &&
       typeof data.publicKey === 'string' &&
       'algorithm' in data &&
@@ -70,7 +63,6 @@ export class Authenticator {
   public toDto(): IAuthenticatorDto {
     return {
       algorithm: this.algorithm,
-      hashAlgorithm: this.hashAlgorithm,
       publicKey: HexConverter.encode(this.publicKey),
       signature: HexConverter.encode(this.signature),
       stateHash: HexConverter.encode(this.stateHash),
@@ -84,7 +76,6 @@ export class Authenticator {
   public toString(): string {
     return dedent`
       Authenticator
-        Hash Algorithm: ${this.hashAlgorithm}
         Public Key: ${HexConverter.encode(this._publicKey)}
         Signature Algorithm: ${this.algorithm}
         Signature: ${HexConverter.encode(this._signature)}
