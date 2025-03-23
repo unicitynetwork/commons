@@ -42,7 +42,9 @@ export class SigningService implements ISigningService {
       hasher.update(nonce);
     }
 
-    return new SigningService(await hasher.digest());
+    const hash = await hasher.digest();
+
+    return new SigningService(hash.data);
   }
 
   /**

@@ -1,4 +1,5 @@
 import { Authenticator, IAuthenticatorDto } from './Authenticator.js';
+import { DataHash } from '../hash/DataHash.js';
 import { DataHasher } from '../hash/DataHasher.js';
 import { HashAlgorithm } from '../hash/HashAlgorithm.js';
 import { IMerkleTreePathDto, MerkleTreePath } from '../smt/MerkleTreePath.js';
@@ -22,14 +23,8 @@ export class InclusionProof {
   public constructor(
     public readonly merkleTreePath: MerkleTreePath,
     public readonly authenticator: Authenticator,
-    private readonly _transactionHash: Uint8Array,
-  ) {
-    this._transactionHash = new Uint8Array(_transactionHash);
-  }
-
-  public get transactionHash(): Uint8Array {
-    return new Uint8Array(this._transactionHash);
-  }
+    public readonly transactionHash: DataHash,
+  ) {}
 
   public static fromDto(data: unknown): InclusionProof {
     if (!InclusionProof.isDto(data)) {
@@ -39,7 +34,7 @@ export class InclusionProof {
     return new InclusionProof(
       MerkleTreePath.fromDto(data.merkleTreePath),
       Authenticator.fromDto(data.authenticator),
-      HexConverter.decode(data.transactionHash),
+      DataHash.fromDto(data.transactionHash),
     );
   }
 
@@ -57,7 +52,7 @@ export class InclusionProof {
     return {
       authenticator: this.authenticator.toDto(),
       merkleTreePath: this.merkleTreePath.toDto(),
-      transactionHash: HexConverter.encode(this.transactionHash),
+      transactionHash: this.transactionHash.toDto(),
     };
   }
 
@@ -101,6 +96,6 @@ export class InclusionProof {
       Inclusion Proof
         ${this.merkleTreePath.toString()}
         ${this.authenticator.toString()}
-        Payload: ${HexConverter.encode(this._transactionHash)}`;
+        Payload: ${this.transactionHash.toString()}`;
   }
 }
