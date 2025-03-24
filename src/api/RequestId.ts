@@ -14,12 +14,12 @@ export class RequestId {
     return new RequestId(hash);
   }
 
-  public toBigInt(): bigint {
-    return BigInt(`0x01${this.hash.toDto()}`);
+  public static fromDto(data: string): RequestId {
+    return new RequestId(DataHash.fromDto(data));
   }
 
-  public fromDto(data: string): RequestId {
-    return new RequestId(DataHash.fromDto(data));
+  public toBigInt(): bigint {
+    return BigInt(`0x01${this.hash.toDto()}`);
   }
 
   public toDto(): string {
