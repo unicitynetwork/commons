@@ -22,6 +22,11 @@ export class DataHash {
     return new Uint8Array(this._imprint);
   }
 
+  public static fromImprint(imprint: Uint8Array): DataHash {
+    const algorithm = new DataView(imprint.subarray(0, 2).buffer).getUint16(0, false);
+    return new DataHash(algorithm, imprint.subarray(2));
+  }
+
   public static fromDto(data: string): DataHash {
     return new DataHash(parseInt(data.slice(0, 4), 16), HexConverter.decode(data.slice(4)));
   }

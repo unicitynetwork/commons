@@ -10,5 +10,6 @@ describe('Data hash', () => {
       _imprint: new Uint8Array([0x00, 0x01, ...new Uint8Array(32)]),
       algorithm: HashAlgorithm.SHA224,
     });
+    expect(DataHash.fromImprint(hash.imprint)).toEqual(hash);
   });
 });
