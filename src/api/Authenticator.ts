@@ -12,7 +12,7 @@ export interface IAuthenticatorDto {
 }
 
 export class Authenticator {
-  private constructor(
+  public constructor(
     private readonly _publicKey: Uint8Array,
     public readonly algorithm: string,
     private readonly _signature: Uint8Array,
