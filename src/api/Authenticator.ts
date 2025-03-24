@@ -1,5 +1,5 @@
 import { DataHash } from '../hash/DataHash.js';
-import { ISigningService } from '../signing/ISigningService';
+import { ISigningService } from '../signing/ISigningService.js';
 import { SigningService } from '../signing/SigningService.js';
 import { HexConverter } from '../util/HexConverter.js';
 import { dedent } from '../util/StringUtils.js';

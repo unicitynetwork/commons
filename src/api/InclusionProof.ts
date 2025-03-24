@@ -96,6 +96,6 @@ export class InclusionProof {
       Inclusion Proof
         ${this.merkleTreePath.toString()}
         ${this.authenticator.toString()}
-        Payload: ${this.transactionHash.toString()}`;
+        Transaction Hash: ${this.transactionHash.toString()}`;
   }
 }
