@@ -14,12 +14,16 @@ export class RequestId {
     return new RequestId(hash);
   }
 
-  public encode(): Uint8Array {
-    return new Uint8Array(this.hash.data);
-  }
-
   public toBigInt(): bigint {
     return BigInt(`0x01${this.hash.toDto()}`);
+  }
+
+  public fromDto(data: string): RequestId {
+    return new RequestId(DataHash.fromDto(data));
+  }
+
+  public toDto(): string {
+    return this.hash.toDto();
   }
 
   public toString(): string {
