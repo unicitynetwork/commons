@@ -80,7 +80,7 @@ export class Authenticator {
   }
 
   public verify(transactionHash: DataHash): Promise<boolean> {
-    return SigningService.verifyWithPublicKey(this.publicKey, transactionHash.imprint, this.signature);
+    return SigningService.verifyWithPublicKey(transactionHash.imprint, this.signature, this.publicKey);
   }
 
   public toString(): string {
