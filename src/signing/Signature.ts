@@ -18,7 +18,7 @@ export class Signature implements ISignature {
   public static fromDto(data: string): Signature {
     const bytes = HexConverter.decode(data);
 
-    if (bytes.length > 65) {
+    if (bytes.length !== 65) {
       throw new Error('Signature must contain signature and recovery byte.');
     }
 
