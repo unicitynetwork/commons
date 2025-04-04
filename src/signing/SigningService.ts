@@ -1,6 +1,5 @@
 import { secp256k1 } from '@noble/curves/secp256k1';
 
-import { ISignature } from './ISignature.js';
 import { ISigningService } from './ISigningService.js';
 import { Signature } from './Signature.js';
 import { DataHasher } from '../hash/DataHasher.js';
@@ -10,7 +9,7 @@ import { HashAlgorithm } from '../hash/HashAlgorithm.js';
  * Default signing service.
  * @implements {ISigningService}
  */
-export class SigningService implements ISigningService {
+export class SigningService implements ISigningService<Signature> {
   private readonly _publicKey: Uint8Array;
 
   /**
@@ -37,7 +36,7 @@ export class SigningService implements ISigningService {
     return secp256k1.utils.randomPrivateKey();
   }
 
-  public static async createFromSecret(secret: Uint8Array, nonce?: Uint8Array): Promise<ISigningService> {
+  public static async createFromSecret(secret: Uint8Array, nonce?: Uint8Array): Promise<SigningService> {
     const hasher = new DataHasher(HashAlgorithm.SHA256);
     hasher.update(secret);
     if (nonce) {
@@ -49,7 +48,7 @@ export class SigningService implements ISigningService {
     return new SigningService(hash.data);
   }
 
-  public static verifySignature(hash: Uint8Array, signature: Signature): Promise<boolean> {
+  public static verifySignatureWithRecoveredPublicKey(hash: Uint8Array, signature: Signature): Promise<boolean> {
     const publicKey = secp256k1.Signature.fromCompact(signature.toDto()).recoverPublicKey(hash).toRawBytes();
     return SigningService.verifyWithPublicKey(hash, signature.bytes, publicKey);
   }
@@ -69,14 +68,14 @@ export class SigningService implements ISigningService {
    * @param {Uint8Array} hash Hash.
    * @param {Uint8Array} signature Signature.
    */
-  public verify(hash: Uint8Array, signature: Uint8Array): Promise<boolean> {
-    return SigningService.verifyWithPublicKey(hash, signature, this._publicKey);
+  public verify(hash: Uint8Array, signature: Signature): Promise<boolean> {
+    return SigningService.verifyWithPublicKey(hash, signature.bytes, this._publicKey);
   }
 
   /**
    * @see {ISigningService.sign}
    */
-  public sign(hash: Uint8Array): Promise<ISignature> {
+  public sign(hash: Uint8Array): Promise<Signature> {
     const signature = secp256k1.sign(hash, this.privateKey);
     return Promise.resolve(new Signature(signature.toCompactRawBytes(), signature.recovery));
   }

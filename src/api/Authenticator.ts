@@ -1,5 +1,5 @@
 import { DataHash } from '../hash/DataHash.js';
-import { ISigningService } from '../signing/ISigningService.js';
+import { Signature } from '../signing/Signature.js';
 import { SigningService } from '../signing/SigningService.js';
 import { HexConverter } from '../util/HexConverter.js';
 import { dedent } from '../util/StringUtils.js';
@@ -15,23 +15,18 @@ export class Authenticator {
   public constructor(
     private readonly _publicKey: Uint8Array,
     public readonly algorithm: string,
-    private readonly _signature: Uint8Array,
+    public readonly signature: Signature,
     public readonly stateHash: DataHash,
   ) {
     this._publicKey = new Uint8Array(_publicKey);
-    this._signature = new Uint8Array(_signature);
   }
 
   public get publicKey(): Uint8Array {
     return new Uint8Array(this._publicKey);
   }
 
-  public get signature(): Uint8Array {
-    return new Uint8Array(this._signature);
-  }
-
   public static async create(
-    signingService: ISigningService,
+    signingService: SigningService,
     transactionHash: DataHash,
     stateHash: DataHash,
   ): Promise<Authenticator> {
@@ -51,7 +46,7 @@ export class Authenticator {
     return new Authenticator(
       HexConverter.decode(data.publicKey),
       data.algorithm,
-      HexConverter.decode(data.signature),
+      Signature.fromDto(data.signature),
       DataHash.fromDto(data.stateHash),
     );
   }
@@ -74,13 +69,13 @@ export class Authenticator {
     return {
       algorithm: this.algorithm,
       publicKey: HexConverter.encode(this.publicKey),
-      signature: HexConverter.encode(this.signature),
+      signature: this.signature.toDto(),
       stateHash: this.stateHash.toDto(),
     };
   }
 
   public verify(transactionHash: DataHash): Promise<boolean> {
-    return SigningService.verifyWithPublicKey(transactionHash.imprint, this.signature, this.publicKey);
+    return SigningService.verifyWithPublicKey(transactionHash.imprint, this.signature.bytes, this.publicKey);
   }
 
   public toString(): string {
@@ -88,7 +83,7 @@ export class Authenticator {
       Authenticator
         Public Key: ${HexConverter.encode(this._publicKey)}
         Signature Algorithm: ${this.algorithm}
-        Signature: ${HexConverter.encode(this._signature)}
+        Signature: ${this.signature.toString()}
         State Hash: ${this.stateHash.toString()}`;
   }
 }
