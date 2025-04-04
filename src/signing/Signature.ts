@@ -28,4 +28,8 @@ export class Signature implements ISignature {
   public toDto(): string {
     return HexConverter.encode(new Uint8Array([...this._bytes, this.recovery]));
   }
+
+  public encode(): Uint8Array {
+    return new Uint8Array([...this._bytes, this.recovery]);
+  }
 }
