@@ -1,6 +1,8 @@
 import { secp256k1 } from '@noble/curves/secp256k1';
 
+import { ISignature } from './ISignature.js';
 import { ISigningService } from './ISigningService.js';
+import { Signature } from './Signature.js';
 import { DataHasher } from '../hash/DataHasher.js';
 import { HashAlgorithm } from '../hash/HashAlgorithm.js';
 
@@ -47,6 +49,11 @@ export class SigningService implements ISigningService {
     return new SigningService(hash.data);
   }
 
+  public static verifySignature(hash: Uint8Array, signature: Signature): Promise<boolean> {
+    const publicKey = secp256k1.Signature.fromCompact(signature.toDto()).recoverPublicKey(hash).toRawBytes();
+    return SigningService.verifyWithPublicKey(hash, signature.bytes, publicKey);
+  }
+
   /**
    * Verify secp256k1 signature hash.
    * @param {Uint8Array} hash Hash.
@@ -69,8 +76,8 @@ export class SigningService implements ISigningService {
   /**
    * @see {ISigningService.sign}
    */
-  public sign(hash: Uint8Array): Promise<Uint8Array> {
+  public sign(hash: Uint8Array): Promise<ISignature> {
     const signature = secp256k1.sign(hash, this.privateKey);
-    return Promise.resolve(new Uint8Array([...signature.toCompactRawBytes(), signature.recovery]));
+    return Promise.resolve(new Signature(signature.toCompactRawBytes(), signature.recovery));
   }
 }
