@@ -9,6 +9,7 @@ describe('Signing Service tests', function () {
     const hash = await new DataHasher(HashAlgorithm.SHA256).update(new Uint8Array([1, 2, 3])).digest();
     const signature = await signingService.sign(hash.data);
     expect(signature).not.toBeNull();
+    expect(signature.encode().length).toEqual(65);
     const verificationResult = await signingService.verify(hash.data, signature);
     expect(verificationResult).toBeTruthy();
   });
