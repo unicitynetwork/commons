@@ -11,5 +11,9 @@ describe('Data hash', () => {
       algorithm: HashAlgorithm.SHA224,
     });
     expect(DataHash.fromImprint(hash.imprint)).toEqual(hash);
+
+    expect(new DataHash(0b11111111111 as HashAlgorithm, new Uint8Array(32)).toDto()).toStrictEqual(
+      '07ff0000000000000000000000000000000000000000000000000000000000000000',
+    );
   });
 });

@@ -10,7 +10,7 @@ export class DataHash {
   ) {
     this._data = new Uint8Array(_data);
     this._imprint = new Uint8Array(_data.length + 2);
-    this._imprint.set([algorithm & 0xff00, algorithm & 0xff]);
+    this._imprint.set([(algorithm & 0xff00) >> 8, algorithm & 0xff]);
     this._imprint.set(new Uint8Array(_data), 2);
   }
 
