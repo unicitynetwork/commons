@@ -1,13 +1,13 @@
 export default {
-  preset: 'ts-jest',
-  testEnvironment: 'node',
-  transform: {
-    '^.+\\.tsx?$': ['ts-jest', { useESM: true }],
-  },
+  collectCoverage: true,
+  collectCoverageFrom: ['<rootDir>/src/**/*.ts'],
   moduleNameMapper: {
     '^(\\.\\.?/.*)\\.js$': '$1',
   },
+  preset: 'ts-jest',
+  testEnvironment: 'node',
   testMatch: ['<rootDir>/tests/**/*Test.ts'],
-  collectCoverage: true,
-  collectCoverageFrom: ['<rootDir>/src/**/*.ts'],
+  transform: {
+    '^.+\\.tsx?$': ['ts-jest', { useESM: true }],
+  },
 };

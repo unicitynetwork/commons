@@ -1,2 +1,3 @@
-# shared
-A library of shared routines to be used in aggregators, tx-flow runtime and unicity apps
+# Unicity Commons
+
+A library of common functions to be used in Unicity projects.
