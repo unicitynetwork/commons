@@ -43,8 +43,8 @@ export class MerkleTreePath {
       data instanceof Object &&
       'root' in data &&
       typeof data.root === 'string' &&
-      'path' in data &&
-      Array.isArray(data.path)
+      'steps' in data &&
+      Array.isArray(data.steps)
     );
   }
 

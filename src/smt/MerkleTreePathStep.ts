@@ -45,15 +45,7 @@ export class MerkleTreePathStep {
   }
 
   public static isDto(data: unknown): data is IMerkleTreePathStepDto {
-    return (
-      data instanceof Object &&
-      'path' in data &&
-      typeof data.path === 'string' &&
-      'value' in data &&
-      (data.value == null ? true : typeof data.value === 'string') &&
-      'sibling' in data &&
-      (data.sibling == null ? true : typeof data.sibling === 'string')
-    );
+    return data instanceof Object && 'path' in data && typeof data.path === 'string';
   }
 
   public toDto(): IMerkleTreePathStepDto {
