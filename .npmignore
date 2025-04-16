@@ -9,6 +9,7 @@ eslint.config.js
 tsconfig.json
 jest.config.js
 
+src/
 tests/
 coverage/
 node_modules/
