@@ -1,7 +1,6 @@
 import { Authenticator, IAuthenticatorDto } from './Authenticator.js';
+import { Transaction } from './Transaction.js';
 import { DataHash } from '../hash/DataHash.js';
-import { DataHasher } from '../hash/DataHasher.js';
-import { HashAlgorithm } from '../hash/HashAlgorithm.js';
 import { IMerkleTreePathDto, MerkleTreePath } from '../smt/MerkleTreePath.js';
 import { HexConverter } from '../util/HexConverter.js';
 import { dedent } from '../util/StringUtils.js';
@@ -61,19 +60,10 @@ export class InclusionProof {
       return InclusionProofVerificationStatus.NOT_AUTHENTICATED;
     }
 
-    const hash = await new DataHasher(HashAlgorithm.SHA256)
-      .update(
-        new TextEncoder().encode(
-          JSON.stringify({
-            authenticator: this.authenticator,
-            transactionHash: this.transactionHash,
-          }),
-        ),
-      )
-      .digest();
+    const transaction = await Transaction.create(this.authenticator, this.transactionHash);
 
     if (
-      HexConverter.encode(hash.imprint) !==
+      HexConverter.encode(transaction.leafValue.imprint) !==
       HexConverter.encode(this.merkleTreePath.steps.at(-1)?.value ?? new Uint8Array())
     ) {
       return InclusionProofVerificationStatus.NOT_INCLUDED;
