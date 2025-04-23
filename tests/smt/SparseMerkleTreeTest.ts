@@ -158,8 +158,6 @@ describe('Sparse Merkle Tree tests', function () {
       await smt.addLeaf(leaf.path, textEncoder.encode(leaf.value));
     }
 
-    console.log(await smt.getPath(0b11010n).toString());
-
     expect(await smt.getPath(0b11010n).verify(0b11010n)).toEqual({
       isPathIncluded: false,
       isPathValid: true,

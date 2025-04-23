@@ -59,7 +59,7 @@ export class MerkleTreePathStep {
   public toString(): string {
     return dedent`
       Merkle Tree Path Step
-        Path: ${this.path}
+        Path: ${this.path.toString(2)}
         Value: ${this._value ? HexConverter.encode(this._value) : 'null'}
         Sibling: ${this.sibling?.toString() ?? 'null'}`;
   }
