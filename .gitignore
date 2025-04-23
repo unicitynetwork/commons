@@ -130,3 +130,10 @@ dist
 .pnp.*
 
 *.bac
+
+.npmrc
+.DS_Store
+
+.idea
+
+lib/
