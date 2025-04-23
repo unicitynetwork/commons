@@ -64,7 +64,7 @@ export class InclusionProof {
 
     if (
       HexConverter.encode(transaction.leafValue.imprint) !==
-      HexConverter.encode(this.merkleTreePath.steps.at(-1)?.value ?? new Uint8Array())
+      HexConverter.encode(this.merkleTreePath.steps.at(0)?.value ?? new Uint8Array())
     ) {
       return InclusionProofVerificationStatus.NOT_INCLUDED;
     }
