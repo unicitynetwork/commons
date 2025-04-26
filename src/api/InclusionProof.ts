@@ -39,7 +39,8 @@ export class InclusionProof {
 
   public static isDto(data: unknown): data is IInclusionProofDto {
     return (
-      data instanceof Object &&
+      typeof data === 'object' &&
+      data !== null &&
       'merkleTreePath' in data &&
       'authenticator' in data &&
       'transactionHash' in data &&

@@ -53,7 +53,8 @@ export class Authenticator {
 
   public static isDto(data: unknown): data is IAuthenticatorDto {
     return (
-      data instanceof Object &&
+      typeof data === 'object' &&
+      data !== null &&
       'publicKey' in data &&
       typeof data.publicKey === 'string' &&
       'algorithm' in data &&

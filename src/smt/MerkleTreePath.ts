@@ -40,7 +40,8 @@ export class MerkleTreePath {
 
   public static isDto(data: unknown): data is IMerkleTreePathDto {
     return (
-      data instanceof Object &&
+      typeof data === 'object' &&
+      data !== null &&
       'root' in data &&
       typeof data.root === 'string' &&
       'steps' in data &&
