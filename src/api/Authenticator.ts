@@ -1,3 +1,5 @@
+import { CborDecoder } from '../cbor/CborDecoder.js';
+import { CborEncoder } from '../cbor/CborEncoder.js';
 import { DataHash } from '../hash/DataHash.js';
 import { Signature } from '../signing/Signature.js';
 import { SigningService } from '../signing/SigningService.js';
@@ -64,6 +66,25 @@ export class Authenticator {
       'stateHash' in data &&
       typeof data.stateHash === 'string'
     );
+  }
+
+  public static decode(bytes: Uint8Array): Authenticator {
+    const data = CborDecoder.readArray(bytes);
+    return new Authenticator(
+      CborDecoder.readByteString(data[1]),
+      CborDecoder.readTextString(data[0]),
+      Signature.decode(CborDecoder.readByteString(data[2])),
+      DataHash.fromImprint(CborDecoder.readByteString(data[3])),
+    );
+  }
+
+  public encode(): Uint8Array {
+    return CborEncoder.encodeArray([
+      CborEncoder.encodeTextString(this.algorithm),
+      CborEncoder.encodeByteString(this.publicKey),
+      CborEncoder.encodeByteString(this.signature.encode()),
+      CborEncoder.encodeByteString(this.stateHash.imprint),
+    ]);
   }
 
   public toDto(): IAuthenticatorDto {

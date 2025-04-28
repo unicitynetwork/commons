@@ -1,5 +1,6 @@
 import { HashAlgorithm } from './HashAlgorithm.js';
 import { HexConverter } from '../util/HexConverter.js';
+import { HashError } from "./HashError";
 
 export class DataHash {
   private readonly _imprint: Uint8Array;
@@ -23,7 +24,11 @@ export class DataHash {
   }
 
   public static fromImprint(imprint: Uint8Array): DataHash {
-    const algorithm = new DataView(imprint.subarray(0, 2).buffer).getUint16(0, false);
+    if (imprint.length < 3) {
+      throw new HashError('Imprint must have 2 bytes of algorithm and at least 1 byte of data.');
+    }
+
+    const algorithm = (imprint[0] << 8) | imprint[1];
     return new DataHash(algorithm, imprint.subarray(2));
   }
 
