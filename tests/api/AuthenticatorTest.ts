@@ -14,7 +14,6 @@ describe('Authenticator', () => {
       await signingService.sign(new Uint8Array(32)),
       DataHash.fromImprint(new Uint8Array(34)),
     );
-    const bytes = authenticator.encode();
-    expect(Authenticator.decode(bytes)).toStrictEqual(authenticator);
+    expect(Authenticator.decode(authenticator.encode())).toStrictEqual(authenticator);
   });
 });

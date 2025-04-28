@@ -1,6 +1,6 @@
 import { HashAlgorithm } from './HashAlgorithm.js';
+import { HashError } from './HashError.js';
 import { HexConverter } from '../util/HexConverter.js';
-import { HashError } from "./HashError";
 
 export class DataHash {
   private readonly _imprint: Uint8Array;

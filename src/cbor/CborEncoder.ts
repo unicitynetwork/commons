@@ -1,6 +1,6 @@
-import { HexConverter } from '../util/HexConverter.js';
 import { CborError } from './CborError.js';
 import { MajorType } from './MajorType.js';
+import { HexConverter } from '../util/HexConverter.js';
 
 export class CborEncoder {
   public static encodeUnsignedInteger(input: bigint | number): Uint8Array {
