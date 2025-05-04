@@ -1,3 +1,4 @@
+import { RequestId } from './RequestId.js';
 import { CborDecoder } from '../cbor/CborDecoder.js';
 import { CborEncoder } from '../cbor/CborEncoder.js';
 import { DataHash } from '../hash/DataHash.js';
@@ -98,6 +99,10 @@ export class Authenticator {
 
   public verify(transactionHash: DataHash): Promise<boolean> {
     return SigningService.verifyWithPublicKey(transactionHash.imprint, this.signature.bytes, this.publicKey);
+  }
+
+  public calculateRequestId(): Promise<RequestId> {
+    return RequestId.create(this._publicKey, this.stateHash);
   }
 
   public toString(): string {

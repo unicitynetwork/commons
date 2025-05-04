@@ -1,4 +1,5 @@
 import { Authenticator } from '../../src/api/Authenticator.js';
+import { RequestId } from '../../src/api/RequestId.js';
 import { DataHash } from '../../src/hash/DataHash.js';
 import { SigningService } from '../../src/signing/SigningService.js';
 import { HexConverter } from '../../src/util/HexConverter.js';
@@ -15,5 +16,20 @@ describe('Authenticator', () => {
       DataHash.fromImprint(new Uint8Array(34)),
     );
     expect(Authenticator.decode(authenticator.encode())).toStrictEqual(authenticator);
+  });
+
+  it('should calculate request id', async () => {
+    const signingService = new SigningService(
+      new Uint8Array(HexConverter.decode('0000000000000000000000000000000000000000000000000000000000000001')),
+    );
+    const authenticator = new Authenticator(
+      signingService.publicKey,
+      'secp256k1',
+      await signingService.sign(new Uint8Array(32)),
+      DataHash.fromImprint(new Uint8Array(34)),
+    );
+
+    const requestId = await RequestId.create(signingService.publicKey, DataHash.fromImprint(new Uint8Array(34)));
+    expect(requestId.equals(await authenticator.calculateRequestId())).toBeTruthy();
   });
 });

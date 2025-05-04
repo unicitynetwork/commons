@@ -26,6 +26,10 @@ export class RequestId {
     return this.hash.toDto();
   }
 
+  public equals(requestId: RequestId): boolean {
+    return this.hash.equals(requestId.hash);
+  }
+
   public toString(): string {
     return `RequestId[${this.hash.toString()}]`;
   }
