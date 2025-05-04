@@ -1,6 +1,6 @@
 {
   "name": "@unicitylabs/commons",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "description": "A library of common functions to be used in Unicity projects.",
   "main": "lib/index.js",
   "type": "module",
