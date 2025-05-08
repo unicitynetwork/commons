@@ -6,5 +6,4 @@ export interface IDataHasher {
 
   update(data: Uint8Array): this;
   digest(): Promise<DataHash>;
-  reset(): this;
 }

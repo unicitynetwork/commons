@@ -41,14 +41,4 @@ export class NodeDataHasher implements IDataHasher {
 
     return this;
   }
-
-  /**
-   * Reset hasher.
-   * @return {IDataHasher}
-   */
-  public reset(): this {
-    this._hasher = createHash(Algorithm[this.algorithm]);
-
-    return this;
-  }
 }

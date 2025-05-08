@@ -58,9 +58,4 @@ export class DataHasher implements IDataHasher {
   public digest(): Promise<DataHash> {
     return Promise.resolve(new DataHash(this.algorithm, this._messageDigest.digest()));
   }
-
-  public reset(): this {
-    this._messageDigest = Algorithm[this.algorithm].create();
-    return this;
-  }
 }

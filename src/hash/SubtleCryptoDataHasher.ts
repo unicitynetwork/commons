@@ -53,14 +53,4 @@ export class SubtleCryptoDataHasher implements IDataHasher {
       new Uint8Array(await window.crypto.subtle.digest({ name: Algorithm[this.algorithm] as string }, this._data)),
     );
   }
-
-  /**
-   * Resets the hash calculation.
-   * @returns {SubtleCryptoDataHasher} The same data hasher object object for chaining calls.
-   */
-  public reset(): this {
-    this._data = new Uint8Array(0);
-
-    return this;
-  }
 }
