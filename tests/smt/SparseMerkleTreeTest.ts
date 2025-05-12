@@ -1,5 +1,6 @@
 'use strict';
 
+import { DataHash } from '../../src/hash/DataHash';
 import { HashAlgorithm } from '../../src/hash/HashAlgorithm.js';
 import { Branch } from '../../src/smt/Branch.js';
 import { LeafBranch } from '../../src/smt/LeafBranch.js';
@@ -10,14 +11,14 @@ import { HexConverter } from '../../src/util/HexConverter.js';
 
 type TreeResult = { path: bigint; hash: string; value?: string; left?: TreeResult; right?: TreeResult };
 
-function validateTree(branch: Branch | RootNode | null, result?: TreeResult): void {
+async function validateTree(branch: Branch | RootNode | null, result?: TreeResult): Promise<void> {
   if (!result) {
     return expect(branch).toBeNull();
   }
 
   expect(branch).not.toBeNull();
   expect(branch!.path).toStrictEqual(result.path);
-  expect(branch!.hash.toDto()).toStrictEqual(result.hash);
+  expect((await branch!.hash).toDto()).toStrictEqual(result.hash);
   if (result.value) {
     const leaf = branch as LeafBranch;
     expect(leaf.value).toStrictEqual(HexConverter.decode(result.value));
@@ -120,23 +121,27 @@ describe('Sparse Merkle Tree tests', function () {
   };
 
   it('should verify the tree', async () => {
-    const smt = await SparseMerkleTree.create(HashAlgorithm.SHA256);
+    const smt = new SparseMerkleTree(HashAlgorithm.SHA256);
     const textEncoder = new TextEncoder();
 
     for (const leaf of leavesSparse) {
-      await smt.addLeaf(leaf.path, textEncoder.encode(leaf.value));
+      smt.addLeaf(leaf.path, textEncoder.encode(leaf.value));
     }
 
-    expect(smt.addLeaf(0b10000000n, textEncoder.encode('OnPath'))).rejects.toThrow('Cannot add leaf inside branch.');
-    expect(smt.addLeaf(0b1000000000n, textEncoder.encode('ThroughLeaf'))).rejects.toThrow(
+    expect(() => smt.addLeaf(0b10000000n, textEncoder.encode('OnPath'))).toThrow('Cannot add leaf inside branch.');
+    expect(() => smt.addLeaf(0b1000000000n, textEncoder.encode('ThroughLeaf'))).toThrow(
       'Cannot extend tree through leaf.',
     );
 
-    expect(smt.rootHash.toDto()).toStrictEqual('00001fd5fffc41e26f249d04e435b71dbe86d079711131671ed54431a5e117291b42');
+    expect((await smt.rootHash).toDto()).toStrictEqual(
+      '00001fd5fffc41e26f249d04e435b71dbe86d079711131671ed54431a5e117291b42',
+    );
 
     const rootNode = (smt as unknown as { root: RootNode }).root;
     expect(rootNode).toBeInstanceOf(RootNode);
-    expect(rootNode.hash.toDto()).toStrictEqual('00001fd5fffc41e26f249d04e435b71dbe86d079711131671ed54431a5e117291b42');
+    expect((await rootNode.hash).toDto()).toStrictEqual(
+      '00001fd5fffc41e26f249d04e435b71dbe86d079711131671ed54431a5e117291b42',
+    );
 
     validateTree(rootNode, builtTree);
   });
@@ -151,27 +156,44 @@ describe('Sparse Merkle Tree tests', function () {
   });
 
   it('get path', async () => {
-    const smt = await SparseMerkleTree.create(HashAlgorithm.SHA256);
+    const smt = new SparseMerkleTree(HashAlgorithm.SHA256);
     const textEncoder = new TextEncoder();
 
     for (const leaf of leavesSparse) {
       await smt.addLeaf(leaf.path, textEncoder.encode(leaf.value));
     }
 
-    expect(await smt.getPath(0b11010n).verify(0b11010n)).toEqual({
+    let path = await smt.getPath(0b11010n);
+    expect(path.verify(0b11010n)).toEqual({
       isPathIncluded: false,
       isPathValid: true,
       result: false,
     });
-    expect(await smt.getPath(0b110010000n).verify(0b110010000n)).toEqual({
+
+    path = await smt.getPath(0b110010000n);
+    expect(path.verify(0b110010000n)).toEqual({
       isPathIncluded: true,
       isPathValid: true,
       result: true,
     });
-    expect(await smt.getPath(0b110010000n).verify(0b11010n)).toEqual({
+    path = await smt.getPath(0b110010000n);
+    expect(path.verify(0b11010n)).toEqual({
       isPathIncluded: false,
       isPathValid: true,
       result: false,
     });
+  });
+
+  it('async test', async () => {
+    const tree = new SparseMerkleTree(HashAlgorithm.SHA256);
+    tree.addLeaf(0b10n, new Uint8Array([1, 2, 3]));
+    tree.addLeaf(0b101n, new Uint8Array([4, 5, 6]));
+
+    await expect(tree.root.hash).resolves.toEqual(
+      new DataHash(
+        HashAlgorithm.SHA256,
+        HexConverter.decode('1c84da4abb4a2af2fa49e295032a5fbce583e2b8043a20246c27f327ee38d927'),
+      ),
+    );
   });
 });
