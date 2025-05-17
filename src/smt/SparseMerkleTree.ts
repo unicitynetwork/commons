@@ -4,23 +4,19 @@ import { MerkleTreePath } from './MerkleTreePath.js';
 import { MerkleTreePathStep } from './MerkleTreePathStep.js';
 import { NodeBranch } from './NodeBranch.js';
 import { RootNode } from './RootNode.js';
-import { DataHash } from '../hash/DataHash.js';
 import { HashAlgorithm } from '../hash/HashAlgorithm.js';
 
 type CommonPath = { length: bigint; path: bigint };
 
 export class SparseMerkleTree {
-  public constructor(
-    public readonly algorithm: HashAlgorithm,
-    private root: RootNode,
-  ) {}
+  private _root: RootNode;
 
-  public get rootHash(): DataHash {
-    return this.root.hash;
+  public constructor(public readonly algorithm: HashAlgorithm) {
+    this._root = new RootNode(algorithm, null, null);
   }
 
-  public static async create(algorithm: HashAlgorithm): Promise<SparseMerkleTree> {
-    return new SparseMerkleTree(algorithm, await RootNode.create(algorithm, null, null));
+  public get root(): RootNode {
+    return this._root;
   }
 
   public static calculateCommonPath(path1: bigint, path2: bigint): CommonPath {
@@ -37,38 +33,11 @@ export class SparseMerkleTree {
     return { length, path };
   }
 
-  public async addLeaf(path: bigint, value: Uint8Array): Promise<void> {
-    const isRight = path & 1n;
-    let left: Branch | null;
-    let right: Branch | null;
-    if (isRight) {
-      left = this.root.left;
-      right = this.root.right
-        ? await this.buildTree(this.root.right, path, value)
-        : await LeafBranch.create(this.algorithm, path, value);
-    } else {
-      left = this.root.left
-        ? await this.buildTree(this.root.left, path, value)
-        : await LeafBranch.create(this.algorithm, path, value);
-      right = this.root.right;
-    }
-
-    this.root = await RootNode.create(this.algorithm, left, right);
-  }
-
-  public getPath(path: bigint): MerkleTreePath {
-    return new MerkleTreePath(this.rootHash, this.generatePath(path, this.root.left, this.root.right));
-  }
-
-  public toString(): string {
-    return this.root.toString();
-  }
-
-  private generatePath(
+  private static async generatePath(
     remainingPath: bigint,
     left: Branch | null,
     right: Branch | null,
-  ): ReadonlyArray<MerkleTreePathStep | null> {
+  ): Promise<ReadonlyArray<MerkleTreePathStep | null>> {
     const isRight = remainingPath & 1n;
     const branch = isRight ? right : left;
     const siblingBranch = isRight ? left : right;
@@ -81,28 +50,60 @@ export class SparseMerkleTree {
 
     if (branch.path === commonPath.path) {
       if (branch instanceof LeafBranch) {
-        return [MerkleTreePathStep.createFromLeaf(branch, siblingBranch)];
+        return [await MerkleTreePathStep.createFromLeaf(branch, siblingBranch)];
       }
 
       // If path has ended, return the current non leaf branch data
       if (remainingPath >> commonPath.length === 1n) {
-        return [MerkleTreePathStep.createFromBranch(branch, siblingBranch)];
+        return [await MerkleTreePathStep.createFromBranch(branch, siblingBranch)];
       }
 
       return [
-        ...this.generatePath(remainingPath >> commonPath.length, branch.left, branch.right),
-        MerkleTreePathStep.createFromBranch(branch, siblingBranch),
+        ...(await this.generatePath(remainingPath >> commonPath.length, branch.left, branch.right)),
+        await MerkleTreePathStep.createFromBranch(branch, siblingBranch),
       ];
     }
 
     if (branch instanceof LeafBranch) {
-      return [MerkleTreePathStep.createFromLeaf(branch, siblingBranch)];
+      return [await MerkleTreePathStep.createFromLeaf(branch, siblingBranch)];
     }
 
-    return [MerkleTreePathStep.createFromBranch(branch, siblingBranch)];
+    return [await MerkleTreePathStep.createFromBranch(branch, siblingBranch)];
   }
 
-  private async buildTree(branch: Branch, remainingPath: bigint, value: Uint8Array): Promise<Branch> {
+  public addLeaf(path: bigint, value: Uint8Array): void {
+    const isRight = path & 1n;
+    let left: Branch | null;
+    let right: Branch | null;
+    if (isRight) {
+      left = this._root.left;
+      right = this._root.right
+        ? this.buildTree(this._root.right, path, value)
+        : new LeafBranch(this.algorithm, path, value);
+    } else {
+      left = this._root.left
+        ? this.buildTree(this._root.left, path, value)
+        : new LeafBranch(this.algorithm, path, value);
+      right = this._root.right;
+    }
+
+    this._root = new RootNode(this.algorithm, left, right);
+  }
+
+  public getPath(path: bigint): Promise<MerkleTreePath> {
+    return Promise.all([
+      this._root.hashPromise,
+      SparseMerkleTree.generatePath(path, this._root.left, this._root.right),
+    ]).then(([hash, path]) => {
+      return new MerkleTreePath(hash, path);
+    });
+  }
+
+  public toString(): string {
+    return this._root.toString();
+  }
+
+  private buildTree(branch: Branch, remainingPath: bigint, value: Uint8Array): Branch {
     const commonPath = SparseMerkleTree.calculateCommonPath(remainingPath, branch.path);
     const isRight = (remainingPath >> commonPath.length) & 1n;
 
@@ -116,9 +117,9 @@ export class SparseMerkleTree {
         throw new Error('Cannot extend tree through leaf.');
       }
 
-      const oldBranch = await LeafBranch.create(this.algorithm, branch.path >> commonPath.length, branch.value);
-      const newBranch = await LeafBranch.create(this.algorithm, remainingPath >> commonPath.length, value);
-      return NodeBranch.create(
+      const oldBranch = new LeafBranch(this.algorithm, branch.path >> commonPath.length, branch.value);
+      const newBranch = new LeafBranch(this.algorithm, remainingPath >> commonPath.length, value);
+      return new NodeBranch(
         this.algorithm,
         commonPath.path,
         isRight ? oldBranch : newBranch,
@@ -128,14 +129,9 @@ export class SparseMerkleTree {
 
     // If node branch is split in the middle
     if (commonPath.path < branch.path) {
-      const newBranch = await LeafBranch.create(this.algorithm, remainingPath >> commonPath.length, value);
-      const oldBranch = await NodeBranch.create(
-        this.algorithm,
-        branch.path >> commonPath.length,
-        branch.left,
-        branch.right,
-      );
-      return NodeBranch.create(
+      const newBranch = new LeafBranch(this.algorithm, remainingPath >> commonPath.length, value);
+      const oldBranch = new NodeBranch(this.algorithm, branch.path >> commonPath.length, branch.left, branch.right);
+      return new NodeBranch(
         this.algorithm,
         commonPath.path,
         isRight ? oldBranch : newBranch,
@@ -144,18 +140,18 @@ export class SparseMerkleTree {
     }
 
     if (isRight) {
-      return NodeBranch.create(
+      return new NodeBranch(
         this.algorithm,
         branch.path,
         branch.left,
-        await this.buildTree(branch.right, remainingPath >> commonPath.length, value),
+        this.buildTree(branch.right, remainingPath >> commonPath.length, value),
       );
     }
 
-    return NodeBranch.create(
+    return new NodeBranch(
       this.algorithm,
       branch.path,
-      await this.buildTree(branch.left, remainingPath >> commonPath.length, value),
+      this.buildTree(branch.left, remainingPath >> commonPath.length, value),
       branch.right,
     );
   }

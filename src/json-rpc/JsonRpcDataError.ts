@@ -1,7 +1,7 @@
 /**
  * JSON-RPC error object.
  */
-export class JsonRpcError implements Error {
+export class JsonRpcDataError implements Error {
   public readonly code: number;
   public readonly message: string;
   public readonly name: string = 'JsonRpcError';

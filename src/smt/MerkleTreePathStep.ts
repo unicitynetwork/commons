@@ -24,12 +24,12 @@ export class MerkleTreePathStep {
     return this._value ? new Uint8Array(this._value) : null;
   }
 
-  public static createFromLeaf(branch: LeafBranch, sibling: Branch | null): MerkleTreePathStep {
-    return new MerkleTreePathStep(branch.path, sibling?.hash ?? null, branch.value);
+  public static async createFromLeaf(branch: LeafBranch, sibling: Branch | null): Promise<MerkleTreePathStep> {
+    return new MerkleTreePathStep(branch.path, (await sibling?.hashPromise) ?? null, branch.value);
   }
 
-  public static createFromBranch(branch: NodeBranch, sibling: Branch | null): MerkleTreePathStep {
-    return new MerkleTreePathStep(branch.path, sibling?.hash ?? null, null);
+  public static async createFromBranch(branch: NodeBranch, sibling: Branch | null): Promise<MerkleTreePathStep> {
+    return new MerkleTreePathStep(branch.path, (await sibling?.hashPromise) ?? null, null);
   }
 
   public static fromDto(data: unknown): MerkleTreePathStep {
