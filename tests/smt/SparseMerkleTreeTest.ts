@@ -1,6 +1,6 @@
 'use strict';
 
-import { DataHash } from '../../src/hash/DataHash';
+import { DataHash } from '../../src/hash/DataHash.js';
 import { HashAlgorithm } from '../../src/hash/HashAlgorithm.js';
 import { Branch } from '../../src/smt/Branch.js';
 import { LeafBranch } from '../../src/smt/LeafBranch.js';
@@ -133,7 +133,7 @@ describe('Sparse Merkle Tree tests', function () {
       'Cannot extend tree through leaf.',
     );
 
-    expect((await smt.rootHash).toDto()).toStrictEqual(
+    expect((await smt.root.hash).toDto()).toStrictEqual(
       '00001fd5fffc41e26f249d04e435b71dbe86d079711131671ed54431a5e117291b42',
     );
 
@@ -164,20 +164,20 @@ describe('Sparse Merkle Tree tests', function () {
     }
 
     let path = await smt.getPath(0b11010n);
-    expect(path.verify(0b11010n)).toEqual({
+    await expect(path.verify(0b11010n)).resolves.toEqual({
       isPathIncluded: false,
       isPathValid: true,
       result: false,
     });
 
     path = await smt.getPath(0b110010000n);
-    expect(path.verify(0b110010000n)).toEqual({
+    await expect(path.verify(0b110010000n)).resolves.toEqual({
       isPathIncluded: true,
       isPathValid: true,
       result: true,
     });
     path = await smt.getPath(0b110010000n);
-    expect(path.verify(0b11010n)).toEqual({
+    await expect(path.verify(0b11010n)).resolves.toEqual({
       isPathIncluded: false,
       isPathValid: true,
       result: false,
