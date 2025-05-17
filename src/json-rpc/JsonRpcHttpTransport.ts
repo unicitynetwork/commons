@@ -1,7 +1,8 @@
 import { v4 as uuid } from 'uuid';
 
 import { IJsonRpcResponse } from './IJsonRpcResponse.js';
-import { JsonRpcError } from './JsonRpcError.js';
+import { JsonRpcDataError } from './JsonRpcDataError.js';
+import { JsonRpcNetworkError } from './JsonRpcNetworkError.js';
 
 /**
  * JSON-RPC HTTP service.
@@ -18,7 +19,6 @@ export class JsonRpcHttpTransport {
 
   /**
    * Send a JSON-RPC request.
-   * @see {T}
    */
   public async request(method: string, params: unknown | null): Promise<unknown> {
     const response = await fetch(this.url, {
@@ -33,16 +33,13 @@ export class JsonRpcHttpTransport {
     });
 
     if (!response.ok) {
-      throw new JsonRpcError({
-        code: 0,
-        message: `Fetch failed: ${await response.text()}`,
-      });
+      throw new JsonRpcNetworkError(response.status, await response.text());
     }
 
     const data = (await response.json()) as IJsonRpcResponse;
 
     if (data.error) {
-      throw new JsonRpcError(data.error);
+      throw new JsonRpcDataError(data.error);
     }
 
     return data.result;
