@@ -6,7 +6,7 @@ import { HexConverter } from '../util/HexConverter.js';
 import { dedent } from '../util/StringUtils.js';
 
 export class LeafBranch {
-  public readonly hash: Promise<DataHash>;
+  public readonly hashPromise: Promise<DataHash>;
 
   public constructor(
     algorithm: HashAlgorithm,
@@ -14,7 +14,7 @@ export class LeafBranch {
     private readonly _value: Uint8Array,
   ) {
     this._value = new Uint8Array(_value);
-    this.hash = new DataHasher(algorithm).update(BigintConverter.encode(path)).update(this._value).digest();
+    this.hashPromise = new DataHasher(algorithm).update(BigintConverter.encode(path)).update(this._value).digest();
   }
 
   public get value(): Uint8Array {

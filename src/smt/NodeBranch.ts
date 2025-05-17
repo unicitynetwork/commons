@@ -6,7 +6,7 @@ import { BigintConverter } from '../util/BigintConverter.js';
 import { dedent } from '../util/StringUtils.js';
 
 export class NodeBranch {
-  public readonly hash: Promise<DataHash>;
+  public readonly hashPromise: Promise<DataHash>;
 
   public constructor(
     algorithm: HashAlgorithm,
@@ -14,7 +14,7 @@ export class NodeBranch {
     public readonly left: Branch,
     public readonly right: Branch,
   ) {
-    this.hash = Promise.all([left.hash, right.hash])
+    this.hashPromise = Promise.all([left.hashPromise, right.hashPromise])
       .then(([leftHash, rightHash]) => {
         return new DataHasher(algorithm)
           .update(leftHash.data ?? new Uint8Array(1))

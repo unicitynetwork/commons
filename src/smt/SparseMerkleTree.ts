@@ -91,11 +91,12 @@ export class SparseMerkleTree {
   }
 
   public getPath(path: bigint): Promise<MerkleTreePath> {
-    return Promise.all([this._root.hash, SparseMerkleTree.generatePath(path, this._root.left, this._root.right)]).then(
-      ([hash, path]) => {
-        return new MerkleTreePath(hash, path);
-      },
-    );
+    return Promise.all([
+      this._root.hashPromise,
+      SparseMerkleTree.generatePath(path, this._root.left, this._root.right),
+    ]).then(([hash, path]) => {
+      return new MerkleTreePath(hash, path);
+    });
   }
 
   public toString(): string {

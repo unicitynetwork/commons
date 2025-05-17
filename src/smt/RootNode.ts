@@ -5,7 +5,7 @@ import { HashAlgorithm } from '../hash/HashAlgorithm.js';
 import { dedent } from '../util/StringUtils.js';
 
 export class RootNode {
-  public readonly hash: Promise<DataHash>;
+  public readonly hashPromise: Promise<DataHash>;
   public readonly path: bigint = 1n;
 
   public constructor(
@@ -13,7 +13,7 @@ export class RootNode {
     public readonly left: Branch | null,
     public readonly right: Branch | null,
   ) {
-    this.hash = Promise.all([left?.hash, right?.hash]).then(([leftHash, rightHash]) => {
+    this.hashPromise = Promise.all([left?.hashPromise, right?.hashPromise]).then(([leftHash, rightHash]) => {
       return new DataHasher(algorithm)
         .update(leftHash?.data ?? new Uint8Array(1))
         .update(rightHash?.data ?? new Uint8Array(1))

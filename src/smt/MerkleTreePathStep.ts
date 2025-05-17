@@ -25,11 +25,11 @@ export class MerkleTreePathStep {
   }
 
   public static async createFromLeaf(branch: LeafBranch, sibling: Branch | null): Promise<MerkleTreePathStep> {
-    return new MerkleTreePathStep(branch.path, (await sibling?.hash) ?? null, branch.value);
+    return new MerkleTreePathStep(branch.path, (await sibling?.hashPromise) ?? null, branch.value);
   }
 
   public static async createFromBranch(branch: NodeBranch, sibling: Branch | null): Promise<MerkleTreePathStep> {
-    return new MerkleTreePathStep(branch.path, (await sibling?.hash) ?? null, null);
+    return new MerkleTreePathStep(branch.path, (await sibling?.hashPromise) ?? null, null);
   }
 
   public static fromDto(data: unknown): MerkleTreePathStep {
