@@ -7,12 +7,10 @@ describe('RequestId', () => {
     const requestId = await RequestId.create(new Uint8Array(20), DataHash.fromImprint(new Uint8Array(34)));
 
     expect(HexConverter.encode(requestId.toCBOR())).toStrictEqual(
-      '5841a0b37f8fba683cc68f6574cd43b39f0343a50008bf6ccea9d13231d9e7e2e1e411edc8d307254296264aebfc3dc76cd8b668373a072fd64665b50000e9fcce5201',
+      '58220000ea659cdc838619b3767c057fdf8e6d99fde2680c5d8517eb06761c0878d40c40',
     );
     expect(RequestId.fromCBOR(requestId.toCBOR())).toStrictEqual(requestId);
-    expect(requestId.toJSON()).toStrictEqual(
-      'a0b37f8fba683cc68f6574cd43b39f0343a50008bf6ccea9d13231d9e7e2e1e411edc8d307254296264aebfc3dc76cd8b668373a072fd64665b50000e9fcce5201',
-    );
+    expect(requestId.toJSON()).toStrictEqual('0000ea659cdc838619b3767c057fdf8e6d99fde2680c5d8517eb06761c0878d40c40');
     expect(RequestId.fromJSON(requestId.toJSON())).toStrictEqual(requestId);
   });
 });

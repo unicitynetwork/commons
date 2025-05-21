@@ -18,7 +18,7 @@ describe('Data hash', () => {
     );
     expect(
       DataHash.fromCBOR(
-        HexConverter.decode('582100010000000000000000000000000000000000000000000000000000000000000000'),
+        HexConverter.decode('582200010000000000000000000000000000000000000000000000000000000000000000'),
       ),
     ).toEqual({
       _data: new Uint8Array(32),
