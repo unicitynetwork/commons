@@ -4,9 +4,9 @@ import { NodeBranch } from './NodeBranch.js';
 import { CborDecoder } from '../cbor/CborDecoder.js';
 import { CborEncoder } from '../cbor/CborEncoder.js';
 import { DataHash } from '../hash/DataHash.js';
+import { BigintConverter } from '../util/BigintConverter.js';
 import { HexConverter } from '../util/HexConverter.js';
 import { dedent } from '../util/StringUtils.js';
-import { BigintConverter } from "../util/BigintConverter";
 
 export interface IMerkleTreePathStepJson {
   readonly path: string;

@@ -6,7 +6,7 @@ import { SigningService } from '../../src/signing/SigningService.js';
 import { HexConverter } from '../../src/util/HexConverter.js';
 
 describe('Authenticator', () => {
-  it('should encode and decode to exactly same object', async () => {
+  it('should encode and decode to exactly same object', () => {
     const signingService = new SigningService(
       new Uint8Array(HexConverter.decode('0000000000000000000000000000000000000000000000000000000000000001')),
     );

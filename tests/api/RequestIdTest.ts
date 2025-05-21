@@ -1,6 +1,6 @@
 import { RequestId } from '../../src/api/RequestId.js';
 import { DataHash } from '../../src/hash/DataHash.js';
-import { HexConverter } from "../../src/util/HexConverter";
+import { HexConverter } from '../../src/util/HexConverter.js';
 
 describe('RequestId', () => {
   it('should encode and decode to exactly same object', async () => {

@@ -1,9 +1,7 @@
 import { DataHash } from '../hash/DataHash.js';
 import { DataHasher } from '../hash/DataHasher.js';
 import { HashAlgorithm } from '../hash/HashAlgorithm.js';
-import { HexConverter } from "../util/HexConverter";
-import { CborEncoder } from "../cbor/CborEncoder";
-import { CborDecoder } from "../cbor/CborDecoder";
+import { HexConverter } from '../util/HexConverter.js';
 
 export class RequestId {
   private constructor(public readonly hash: DataHash) {}
