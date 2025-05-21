@@ -5,7 +5,7 @@ import { MerkleTreePath } from '../../src/smt/MerkleTreePath.js';
 import { MerkleTreePathStep } from '../../src/smt/MerkleTreePathStep.js';
 import { HexConverter } from '../../src/util/HexConverter.js';
 
-describe('SparseMertkleTreePath', () => {
+describe('SparseMerkleTreePath', () => {
   it('should encode and decode to exactly same object', async () => {
     const path = new MerkleTreePath(DataHash.fromImprint(new Uint8Array(34)), [
       await MerkleTreePathStep.createFromLeaf(new LeafBranch(HashAlgorithm.SHA256, 0n, new Uint8Array(10)), null),
