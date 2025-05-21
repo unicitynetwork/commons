@@ -1,14 +1,16 @@
-import { Authenticator, IAuthenticatorDto } from './Authenticator.js';
+import { Authenticator, IAuthenticatorJson } from './Authenticator.js';
 import { Transaction } from './Transaction.js';
+import { CborDecoder } from '../cbor/CborDecoder.js';
+import { CborEncoder } from '../cbor/CborEncoder.js';
 import { DataHash } from '../hash/DataHash.js';
-import { IMerkleTreePathDto, MerkleTreePath } from '../smt/MerkleTreePath.js';
+import { IMerkleTreePathJson, MerkleTreePath } from '../smt/MerkleTreePath.js';
 import { HexConverter } from '../util/HexConverter.js';
 import { dedent } from '../util/StringUtils.js';
 
-export interface IInclusionProofDto {
-  merkleTreePath: IMerkleTreePathDto;
-  authenticator: IAuthenticatorDto;
-  transactionHash: string;
+export interface IInclusionProofJson {
+  readonly merkleTreePath: IMerkleTreePathJson;
+  readonly authenticator: IAuthenticatorJson;
+  readonly transactionHash: string;
 }
 
 export enum InclusionProofVerificationStatus {
@@ -25,19 +27,7 @@ export class InclusionProof {
     public readonly transactionHash: DataHash,
   ) {}
 
-  public static fromDto(data: unknown): InclusionProof {
-    if (!InclusionProof.isDto(data)) {
-      throw new Error('Parsing inclusion proof dto failed.');
-    }
-
-    return new InclusionProof(
-      MerkleTreePath.fromDto(data.merkleTreePath),
-      Authenticator.fromDto(data.authenticator),
-      DataHash.fromDto(data.transactionHash),
-    );
-  }
-
-  public static isDto(data: unknown): data is IInclusionProofDto {
+  public static isJSON(data: unknown): data is IInclusionProofJson {
     return (
       typeof data === 'object' &&
       data !== null &&
@@ -48,12 +38,42 @@ export class InclusionProof {
     );
   }
 
-  public toDto(): IInclusionProofDto {
+  public static fromJSON(data: unknown): InclusionProof {
+    if (!InclusionProof.isJSON(data)) {
+      throw new Error('Parsing inclusion proof dto failed.');
+    }
+
+    return new InclusionProof(
+      MerkleTreePath.fromJSON(data.merkleTreePath),
+      Authenticator.fromJSON(data.authenticator),
+      DataHash.fromJSON(data.transactionHash),
+    );
+  }
+
+  public static fromCBOR(bytes: Uint8Array): InclusionProof {
+    const data = CborDecoder.readArray(bytes);
+
+    return new InclusionProof(
+      MerkleTreePath.fromCBOR(data[0]),
+      Authenticator.fromCBOR(data[1]),
+      DataHash.fromCBOR(data[2]),
+    );
+  }
+
+  public toJSON(): IInclusionProofJson {
     return {
-      authenticator: this.authenticator.toDto(),
-      merkleTreePath: this.merkleTreePath.toDto(),
-      transactionHash: this.transactionHash.toDto(),
+      authenticator: this.authenticator.toJSON(),
+      merkleTreePath: this.merkleTreePath.toJSON(),
+      transactionHash: this.transactionHash.toJSON(),
     };
+  }
+
+  public toCBOR(): Uint8Array {
+    return CborEncoder.encodeArray([
+      this.merkleTreePath.toCBOR(),
+      this.authenticator.toCBOR(),
+      CborEncoder.encodeByteString(this.transactionHash.imprint),
+    ]);
   }
 
   public async verify(requestId: bigint): Promise<InclusionProofVerificationStatus> {

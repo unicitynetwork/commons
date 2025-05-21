@@ -28,11 +28,9 @@ export class BigintConverter {
    * @returns {Uint8Array} Array byte array
    */
   public static encode(value: bigint): Uint8Array {
-    let t = value;
-
     const result = [];
 
-    for (t = value; t > 0n; t >>= 8n) {
+    for (let t = value; t > 0n; t >>= 8n) {
       result.unshift(Number(t & 0xffn));
     }
 

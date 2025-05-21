@@ -11,8 +11,9 @@ export class Transaction {
   ) {}
 
   public static async create(authenticator: Authenticator, transactionHash: DataHash): Promise<Transaction> {
+    // TODO: Create cbor object to calculate hash so it would be consistent with everything else?
     const hash = await new DataHasher(HashAlgorithm.SHA256)
-      .update(authenticator.encode())
+      .update(authenticator.toCBOR())
       .update(transactionHash.imprint)
       .digest();
 

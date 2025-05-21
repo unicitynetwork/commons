@@ -1,4 +1,6 @@
 import { ISignature } from './ISignature.js';
+import { CborDecoder } from '../cbor/CborDecoder.js';
+import { CborEncoder } from '../cbor/CborEncoder.js';
 import { HexConverter } from '../util/HexConverter.js';
 
 export class Signature implements ISignature {
@@ -15,6 +17,10 @@ export class Signature implements ISignature {
     return new Uint8Array(this._bytes);
   }
 
+  public static fromCBOR(bytes: Uint8Array): Signature {
+    return Signature.decode(CborDecoder.readByteString(bytes));
+  }
+
   public static decode(bytes: Uint8Array): Signature {
     if (bytes.length !== 65) {
       throw new Error('Signature must contain signature and recovery byte.');
@@ -23,12 +29,16 @@ export class Signature implements ISignature {
     return new Signature(bytes.slice(0, -1), bytes[bytes.length - 1]);
   }
 
-  public static fromDto(data: string): Signature {
+  public static fromJSON(data: string): Signature {
     return Signature.decode(HexConverter.decode(data));
   }
 
-  public toDto(): string {
+  public toJSON(): string {
     return HexConverter.encode(this.encode());
+  }
+
+  public toCBOR(): Uint8Array {
+    return CborEncoder.encodeByteString(this.encode());
   }
 
   public encode(): Uint8Array {
