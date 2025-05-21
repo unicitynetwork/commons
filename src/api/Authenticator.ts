@@ -7,7 +7,7 @@ import { SigningService } from '../signing/SigningService.js';
 import { HexConverter } from '../util/HexConverter.js';
 import { dedent } from '../util/StringUtils.js';
 
-export interface IAuthenticatorDto {
+export interface IAuthenticatorJson {
   publicKey: string;
   algorithm: string;
   signature: string;
@@ -16,8 +16,8 @@ export interface IAuthenticatorDto {
 
 export class Authenticator {
   public constructor(
-    private readonly _publicKey: Uint8Array,
     public readonly algorithm: string,
+    private readonly _publicKey: Uint8Array,
     public readonly signature: Signature,
     public readonly stateHash: DataHash,
   ) {
@@ -34,27 +34,27 @@ export class Authenticator {
     stateHash: DataHash,
   ): Promise<Authenticator> {
     return new Authenticator(
-      signingService.publicKey,
       signingService.algorithm,
+      signingService.publicKey,
       await signingService.sign(transactionHash.imprint),
       stateHash,
     );
   }
 
-  public static fromDto(data: unknown): Authenticator {
-    if (!Authenticator.isDto(data)) {
+  public static fromJSON(data: unknown): Authenticator {
+    if (!Authenticator.isJSON(data)) {
       throw new Error('Parsing authenticator dto failed.');
     }
 
     return new Authenticator(
-      HexConverter.decode(data.publicKey),
       data.algorithm,
-      Signature.fromDto(data.signature),
-      DataHash.fromDto(data.stateHash),
+      HexConverter.decode(data.publicKey),
+      Signature.fromJSON(data.signature),
+      DataHash.fromJSON(data.stateHash),
     );
   }
 
-  public static isDto(data: unknown): data is IAuthenticatorDto {
+  public static isJSON(data: unknown): data is IAuthenticatorJson {
     return (
       typeof data === 'object' &&
       data !== null &&
@@ -69,17 +69,17 @@ export class Authenticator {
     );
   }
 
-  public static decode(bytes: Uint8Array): Authenticator {
+  public static fromCBOR(bytes: Uint8Array): Authenticator {
     const data = CborDecoder.readArray(bytes);
     return new Authenticator(
-      CborDecoder.readByteString(data[1]),
       CborDecoder.readTextString(data[0]),
+      CborDecoder.readByteString(data[1]),
       Signature.decode(CborDecoder.readByteString(data[2])),
       DataHash.fromImprint(CborDecoder.readByteString(data[3])),
     );
   }
 
-  public encode(): Uint8Array {
+  public toCBOR(): Uint8Array {
     return CborEncoder.encodeArray([
       CborEncoder.encodeTextString(this.algorithm),
       CborEncoder.encodeByteString(this.publicKey),
@@ -88,12 +88,12 @@ export class Authenticator {
     ]);
   }
 
-  public toDto(): IAuthenticatorDto {
+  public toJSON(): IAuthenticatorJson {
     return {
       algorithm: this.algorithm,
       publicKey: HexConverter.encode(this.publicKey),
-      signature: this.signature.toDto(),
-      stateHash: this.stateHash.toDto(),
+      signature: this.signature.toJSON(),
+      stateHash: this.stateHash.toJSON(),
     };
   }
 

@@ -1,13 +1,15 @@
-import { IMerkleTreePathStepDto, MerkleTreePathStep } from './MerkleTreePathStep.js';
+import { IMerkleTreePathStepJson, MerkleTreePathStep } from './MerkleTreePathStep.js';
+import { CborDecoder } from '../cbor/CborDecoder.js';
+import { CborEncoder } from '../cbor/CborEncoder.js';
 import { DataHash } from '../hash/DataHash.js';
 import { DataHasher } from '../hash/DataHasher.js';
 import { HashAlgorithm } from '../hash/HashAlgorithm.js';
 import { BigintConverter } from '../util/BigintConverter.js';
 import { dedent } from '../util/StringUtils.js';
 
-export interface IMerkleTreePathDto {
+export interface IMerkleTreePathJson {
   readonly root: string;
-  readonly steps: ReadonlyArray<IMerkleTreePathStepDto | null>;
+  readonly steps: ReadonlyArray<IMerkleTreePathStepJson | null>;
 }
 
 export class MerkleTreePathVerificationResult {
@@ -27,18 +29,18 @@ export class MerkleTreePath {
     public readonly steps: ReadonlyArray<MerkleTreePathStep | null>,
   ) {}
 
-  public static fromDto(data: unknown): MerkleTreePath {
-    if (!MerkleTreePath.isDto(data)) {
+  public static fromJSON(data: unknown): MerkleTreePath {
+    if (!MerkleTreePath.isJSON(data)) {
       throw new Error('Parsing merkle tree path dto failed.');
     }
 
     return new MerkleTreePath(
-      DataHash.fromDto(data.root),
-      data.steps.map((step: unknown) => MerkleTreePathStep.fromDto(step)),
+      DataHash.fromJSON(data.root),
+      data.steps.map((step: unknown) => MerkleTreePathStep.fromJSON(step)),
     );
   }
 
-  public static isDto(data: unknown): data is IMerkleTreePathDto {
+  public static isJSON(data: unknown): data is IMerkleTreePathJson {
     return (
       typeof data === 'object' &&
       data !== null &&
@@ -49,10 +51,29 @@ export class MerkleTreePath {
     );
   }
 
-  public toDto(): IMerkleTreePathDto {
+  public static fromCBOR(bytes: Uint8Array): MerkleTreePath {
+    const data = CborDecoder.readArray(bytes);
+    const steps = CborDecoder.readArray(data[1]);
+
+    return new MerkleTreePath(
+      DataHash.fromCBOR(data[0]),
+      steps.map((step) => CborDecoder.readOptional(step, MerkleTreePathStep.fromCBOR)),
+    );
+  }
+
+  public toCBOR(): Uint8Array {
+    return CborEncoder.encodeArray([
+      this.root.toCBOR(),
+      CborEncoder.encodeArray(
+        this.steps.map((step: MerkleTreePathStep | null) => (step ? step.toCBOR() : CborEncoder.encodeNull())),
+      ),
+    ]);
+  }
+
+  public toJSON(): IMerkleTreePathJson {
     return {
-      root: this.root.toDto(),
-      steps: this.steps.map((step) => (step ? step.toDto() : null)),
+      root: this.root.toJSON(),
+      steps: this.steps.map((step) => (step ? step.toJSON() : null)),
     };
   }
 

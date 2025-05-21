@@ -1,6 +1,9 @@
 import { DataHash } from '../hash/DataHash.js';
 import { DataHasher } from '../hash/DataHasher.js';
 import { HashAlgorithm } from '../hash/HashAlgorithm.js';
+import { HexConverter } from "../util/HexConverter";
+import { CborEncoder } from "../cbor/CborEncoder";
+import { CborDecoder } from "../cbor/CborDecoder";
 
 export class RequestId {
   private constructor(public readonly hash: DataHash) {}
@@ -14,16 +17,24 @@ export class RequestId {
     return new RequestId(hash);
   }
 
-  public static fromDto(data: string): RequestId {
-    return new RequestId(DataHash.fromDto(data));
+  public static fromCBOR(data: Uint8Array): RequestId {
+    return new RequestId(DataHash.fromCBOR(data));
+  }
+
+  public static fromJSON(data: string): RequestId {
+    return new RequestId(DataHash.fromJSON(data));
   }
 
   public toBigInt(): bigint {
-    return BigInt(`0x01${this.hash.toDto()}`);
+    return BigInt(`0x01${HexConverter.encode(this.hash.imprint)}`);
   }
 
-  public toDto(): string {
-    return this.hash.toDto();
+  public toJSON(): string {
+    return this.hash.toJSON();
+  }
+
+  public toCBOR(): Uint8Array {
+    return this.hash.toCBOR();
   }
 
   public equals(requestId: RequestId): boolean {

@@ -49,7 +49,7 @@ export class SigningService implements ISigningService<Signature> {
   }
 
   public static verifySignatureWithRecoveredPublicKey(hash: Uint8Array, signature: Signature): Promise<boolean> {
-    const publicKey = secp256k1.Signature.fromCompact(signature.toDto()).recoverPublicKey(hash).toRawBytes();
+    const publicKey = secp256k1.Signature.fromCompact(signature.encode()).recoverPublicKey(hash).toRawBytes();
     return SigningService.verifyWithPublicKey(hash, signature.bytes, publicKey);
   }
 

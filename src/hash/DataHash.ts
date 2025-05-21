@@ -1,5 +1,7 @@
 import { HashAlgorithm } from './HashAlgorithm.js';
 import { HashError } from './HashError.js';
+import { CborDecoder } from '../cbor/CborDecoder.js';
+import { CborEncoder } from '../cbor/CborEncoder.js';
 import { HexConverter } from '../util/HexConverter.js';
 
 export class DataHash {
@@ -32,12 +34,20 @@ export class DataHash {
     return new DataHash(algorithm, imprint.subarray(2));
   }
 
-  public static fromDto(data: string): DataHash {
-    return new DataHash(parseInt(data.slice(0, 4), 16), HexConverter.decode(data.slice(4)));
+  public static fromJSON(data: string): DataHash {
+    return DataHash.fromImprint(HexConverter.decode(data));
   }
 
-  public toDto(): string {
+  public static fromCBOR(bytes: Uint8Array): DataHash {
+    return DataHash.fromImprint(CborDecoder.readByteString(bytes));
+  }
+
+  public toJSON(): string {
     return HexConverter.encode(this._imprint);
+  }
+
+  public toCBOR(): Uint8Array {
+    return CborEncoder.encodeByteString(this._imprint);
   }
 
   public equals(hash: DataHash): boolean {
