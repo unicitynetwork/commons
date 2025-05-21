@@ -3,6 +3,14 @@ import { MajorType } from './MajorType.js';
 import { HexConverter } from '../util/HexConverter.js';
 
 export class CborEncoder {
+  public static encodeOptional<T>(data: T | null | undefined, encoder: (data: T) => Uint8Array): Uint8Array {
+    if (data == null) {
+      return new Uint8Array([0xf6]);
+    }
+
+    return encoder(data);
+  }
+
   public static encodeUnsignedInteger(input: bigint | number): Uint8Array {
     if (input < 0) {
       throw new CborError('Only unsigned numbers are allowed.');

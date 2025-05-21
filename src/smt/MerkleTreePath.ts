@@ -65,7 +65,7 @@ export class MerkleTreePath {
     return CborEncoder.encodeArray([
       this.root.toCBOR(),
       CborEncoder.encodeArray(
-        this.steps.map((step: MerkleTreePathStep | null) => (step ? step.toCBOR() : CborEncoder.encodeNull())),
+        this.steps.map((step: MerkleTreePathStep | null) => step?.toCBOR() ?? CborEncoder.encodeNull()),
       ),
     ]);
   }

@@ -65,8 +65,8 @@ export class MerkleTreePathStep {
   public toCBOR(): Uint8Array {
     return CborEncoder.encodeArray([
       CborEncoder.encodeByteString(BigintConverter.encode(this.path)),
-      this.sibling ? CborEncoder.encodeByteString(this.sibling.imprint) : CborEncoder.encodeNull(),
-      this._value ? CborEncoder.encodeByteString(this._value) : CborEncoder.encodeNull(),
+      this.sibling?.toCBOR() ?? CborEncoder.encodeNull(),
+      CborEncoder.encodeOptional(this._value, CborEncoder.encodeByteString),
     ]);
   }
 
