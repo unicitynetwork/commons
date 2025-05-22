@@ -31,7 +31,7 @@ export class MerkleTreePath {
 
   public static fromJSON(data: unknown): MerkleTreePath {
     if (!MerkleTreePath.isJSON(data)) {
-      throw new Error('Parsing merkle tree path dto failed.');
+      throw new Error('Parsing merkle tree path json failed.');
     }
 
     return new MerkleTreePath(

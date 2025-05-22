@@ -14,7 +14,7 @@ export interface IInclusionProofJson {
 
 export enum InclusionProofVerificationStatus {
   NOT_AUTHENTICATED = 'NOT_AUTHENTICATED',
-  NOT_INCLUDED = 'NOT_INCLUDED',
+  PATH_NOT_INCLUDED = 'PATH_NOT_INCLUDED',
   PATH_INVALID = 'PATH_INVALID',
   OK = 'OK',
 }
@@ -78,7 +78,7 @@ export class InclusionProof {
 
       const transaction = await Transaction.create(this.authenticator, this.transactionHash);
       if (!transaction.verify(this.merkleTreePath.steps.at(0)?.value)) {
-        return InclusionProofVerificationStatus.NOT_INCLUDED;
+        return InclusionProofVerificationStatus.PATH_NOT_INCLUDED;
       }
     }
 
@@ -88,7 +88,7 @@ export class InclusionProof {
     }
 
     if (!result.isPathIncluded) {
-      return InclusionProofVerificationStatus.NOT_INCLUDED;
+      return InclusionProofVerificationStatus.PATH_NOT_INCLUDED;
     }
 
     return InclusionProofVerificationStatus.OK;
