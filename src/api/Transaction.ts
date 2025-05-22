@@ -19,4 +19,12 @@ export class Transaction {
 
     return new Transaction(authenticator, transactionHash, hash);
   }
+
+  public verify(leafValue?: Uint8Array | null): boolean {
+    if (leafValue == null) {
+      return false;
+    }
+
+    return this.leafValue.equals(DataHash.fromImprint(leafValue));
+  }
 }
