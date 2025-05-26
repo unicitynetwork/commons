@@ -3,12 +3,13 @@ import { HashAlgorithm } from '../../src/hash/HashAlgorithm.js';
 import { LeafBranch } from '../../src/smt/LeafBranch.js';
 import { MerkleTreePath } from '../../src/smt/MerkleTreePath.js';
 import { MerkleTreePathStep } from '../../src/smt/MerkleTreePathStep.js';
+import { SparseMerkleTree } from '../../src/smt/SparseMerkleTree.js';
 import { HexConverter } from '../../src/util/HexConverter.js';
 
 describe('SparseMerkleTreePath', () => {
   it('should encode and decode to exactly same object', async () => {
     const path = new MerkleTreePath(DataHash.fromImprint(new Uint8Array(34)), [
-      await MerkleTreePathStep.createFromLeaf(new LeafBranch(HashAlgorithm.SHA256, 0n, new Uint8Array(10)), null),
+      await MerkleTreePathStep.create(0n, new LeafBranch(HashAlgorithm.SHA256, 0n, new Uint8Array(10)), null),
     ]);
 
     expect(HexConverter.encode(path.toCBOR())).toStrictEqual(
@@ -17,7 +18,7 @@ describe('SparseMerkleTreePath', () => {
     expect(MerkleTreePath.fromCBOR(path.toCBOR())).toStrictEqual(path);
     expect(path.toJSON()).toEqual({
       root: '00000000000000000000000000000000000000000000000000000000000000000000',
-      steps: [{ path: '0', value: '00000000000000000000' }],
+      steps: [{ path: '0', value: '00000000000000000000', sibling: null }],
     });
     expect(MerkleTreePath.fromJSON(path.toJSON())).toStrictEqual(path);
   });
@@ -51,5 +52,25 @@ describe('SparseMerkleTreePath', () => {
 
     expect(await path.verify(0b100000000n)).toEqual({ isPathIncluded: true, isPathValid: true, result: true });
     expect(await path.verify(0b100n)).toEqual({ isPathIncluded: false, isPathValid: true, result: false });
+  });
+
+  it('should verify non inclusion path', async () => {
+    const path = MerkleTreePath.fromJSON({
+      root: '000096a296d224f285c67bee93c30f8a309157f0daa35dc5b87e410b78630a09cfc7',
+      steps: [
+        {
+          path: '16',
+          sibling: '00006c5ad75422175395b4b63390e9dea5d0a39017f4750b78cc4b89ac6451265345',
+          value: '76616c75653030303030303030',
+        },
+        {
+          path: '4',
+          sibling: null,
+          value: null,
+        },
+      ],
+    });
+
+    expect(await path.verify(0b1000000n)).toEqual({ isPathIncluded: false, isPathValid: true, result: false });
   });
 });

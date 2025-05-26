@@ -160,7 +160,7 @@ describe('Sparse Merkle Tree tests', function () {
     const textEncoder = new TextEncoder();
 
     for (const leaf of leavesSparse) {
-      await smt.addLeaf(leaf.path, textEncoder.encode(leaf.value));
+      smt.addLeaf(leaf.path, textEncoder.encode(leaf.value));
     }
 
     let path = await smt.getPath(0b11010n);

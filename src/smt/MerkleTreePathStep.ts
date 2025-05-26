@@ -1,6 +1,5 @@
 import { Branch } from './Branch.js';
 import { LeafBranch } from './LeafBranch.js';
-import { NodeBranch } from './NodeBranch.js';
 import { CborDecoder } from '../cbor/CborDecoder.js';
 import { CborEncoder } from '../cbor/CborEncoder.js';
 import { DataHash } from '../hash/DataHash.js';
@@ -10,33 +9,35 @@ import { dedent } from '../util/StringUtils.js';
 
 export interface IMerkleTreePathStepJson {
   readonly path: string;
-  readonly value?: string;
-  readonly sibling?: string;
+  readonly sibling: string | null;
+  readonly value?: string | null;
 }
 
 export class MerkleTreePathStep {
   private constructor(
     public readonly path: bigint,
     public readonly sibling: DataHash | null,
-    private readonly _value: Uint8Array | null,
+    public readonly _value?: Uint8Array | null,
   ) {
-    this._value = _value ? new Uint8Array(_value) : null;
+    this._value = _value ? new Uint8Array(_value) : _value;
   }
 
-  public get value(): Uint8Array | null {
-    return this._value ? new Uint8Array(this._value) : null;
+  public get value(): Uint8Array | null | undefined {
+    return this._value ? new Uint8Array(this._value) : this._value;
   }
 
-  public static async createFromLeaf(branch: LeafBranch, sibling: Branch | null): Promise<MerkleTreePathStep> {
-    return new MerkleTreePathStep(branch.path, (await sibling?.hashPromise) ?? null, branch.value);
-  }
-
-  public static async createFromBranch(branch: NodeBranch, sibling: Branch | null): Promise<MerkleTreePathStep> {
-    return new MerkleTreePathStep(branch.path, (await sibling?.hashPromise) ?? null, null);
+  public static async create(path: bigint, branch: Branch | null, sibling: Branch | null): Promise<MerkleTreePathStep> {
+    return new MerkleTreePathStep(
+      path,
+      (await sibling?.hashPromise) ?? null,
+      branch ? (branch instanceof LeafBranch ? branch.value : undefined) : null,
+    );
   }
 
   public static isJSON(data: unknown): data is IMerkleTreePathStepJson {
-    return typeof data === 'object' && data !== null && 'path' in data && typeof data.path === 'string';
+    return (
+      typeof data === 'object' && data !== null && 'path' in data && typeof data.path === 'string' && 'sibling' in data
+    );
   }
 
   public static fromJSON(data: unknown): MerkleTreePathStep {
@@ -47,7 +48,7 @@ export class MerkleTreePathStep {
     return new MerkleTreePathStep(
       BigInt(data.path),
       data.sibling == null ? null : DataHash.fromJSON(data.sibling),
-      data.value == null ? null : HexConverter.decode(data.value),
+      data.value != null ? HexConverter.decode(data.value) : data.value,
     );
   }
 
@@ -73,8 +74,8 @@ export class MerkleTreePathStep {
   public toJSON(): IMerkleTreePathStepJson {
     return {
       path: this.path.toString(),
-      sibling: this.sibling?.toJSON(),
-      value: this._value ? HexConverter.encode(this._value) : undefined,
+      sibling: this.sibling?.toJSON() ?? null,
+      value: this._value ? HexConverter.encode(this._value) : this._value,
     };
   }
 
