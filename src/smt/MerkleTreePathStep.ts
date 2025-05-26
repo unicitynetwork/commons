@@ -17,7 +17,7 @@ export class MerkleTreePathStep {
   private constructor(
     public readonly path: bigint,
     public readonly sibling: DataHash | null,
-    public readonly _value?: Uint8Array | null,
+    private readonly _value?: Uint8Array | null,
   ) {
     this._value = _value ? new Uint8Array(_value) : _value;
   }
