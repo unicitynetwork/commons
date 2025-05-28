@@ -133,13 +133,13 @@ describe('Sparse Merkle Tree tests', function () {
       'Cannot extend tree through leaf.',
     );
 
-    expect((await smt.root.hash).toJSON()).toStrictEqual(
+    expect((await smt.root.calculateHash()).toJSON()).toStrictEqual(
       '00001fd5fffc41e26f249d04e435b71dbe86d079711131671ed54431a5e117291b42',
     );
 
     const rootNode = (smt as unknown as { root: RootNode }).root;
     expect(rootNode).toBeInstanceOf(RootNode);
-    expect((await rootNode.hash).toJSON()).toStrictEqual(
+    expect((await rootNode.calculateHash()).toJSON()).toStrictEqual(
       '00001fd5fffc41e26f249d04e435b71dbe86d079711131671ed54431a5e117291b42',
     );
 
@@ -195,7 +195,7 @@ describe('Sparse Merkle Tree tests', function () {
     tree.addLeaf(0b10n, new Uint8Array([1, 2, 3]));
     tree.addLeaf(0b101n, new Uint8Array([4, 5, 6]));
 
-    await expect(tree.root.hash).resolves.toEqual(
+    await expect(tree.root.calculateHash()).resolves.toEqual(
       new DataHash(
         HashAlgorithm.SHA256,
         HexConverter.decode('1c84da4abb4a2af2fa49e295032a5fbce583e2b8043a20246c27f327ee38d927'),
