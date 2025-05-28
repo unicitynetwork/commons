@@ -188,6 +188,12 @@ describe('Sparse Merkle Tree tests', function () {
       isPathValid: true,
       result: true,
     });
+    path = await new SparseMerkleTree(HashAlgorithm.SHA256).getPath(0b100n);
+    await expect(path.verify(0b10n)).resolves.toEqual({
+      isPathIncluded: false,
+      isPathValid: true,
+      result: false,
+    });
   });
 
   it('async result', async () => {

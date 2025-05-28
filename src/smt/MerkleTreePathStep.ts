@@ -62,12 +62,17 @@ export class MerkleTreePathStep {
     public readonly branch: MerkleTreePathStepBranch | null,
   ) {}
 
+  public static async createWithoutBranch(path: bigint, sibling: Branch | null): Promise<MerkleTreePathStep> {
+    return new MerkleTreePathStep(path, (await sibling?.calculateHash()) ?? null, null);
+  }
+
   public static async create(path: bigint, value: Branch | null, sibling: Branch | null): Promise<MerkleTreePathStep> {
+    const siblingHash = await sibling?.calculateHash();
+
     if (value == null) {
-      return new MerkleTreePathStep(path, (await sibling?.calculateHash()) ?? null, new MerkleTreePathStepBranch(null));
+      return new MerkleTreePathStep(path, siblingHash ?? null, new MerkleTreePathStepBranch(null));
     }
 
-    const siblingHash = await sibling?.calculateHash();
     if (value instanceof LeafBranch) {
       return new MerkleTreePathStep(path, siblingHash ?? null, new MerkleTreePathStepBranch(value.value));
     }

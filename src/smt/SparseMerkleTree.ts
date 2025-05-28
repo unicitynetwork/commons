@@ -43,7 +43,7 @@ export class SparseMerkleTree {
     const siblingBranch = isRight ? left : right;
 
     if (branch === null) {
-      return [await MerkleTreePathStep.create(remainingPath, branch, siblingBranch)];
+      return [await MerkleTreePathStep.createWithoutBranch(remainingPath, siblingBranch)];
     }
 
     const commonPath = SparseMerkleTree.calculateCommonPath(remainingPath, branch.path);
