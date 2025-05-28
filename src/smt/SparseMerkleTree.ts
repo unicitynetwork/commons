@@ -60,7 +60,7 @@ export class SparseMerkleTree {
 
       return [
         ...(await this.generatePath(remainingPath >> commonPath.length, branch.left, branch.right)),
-        await MerkleTreePathStep.create(branch.path, branch, siblingBranch),
+        await MerkleTreePathStep.create(branch.path, null, siblingBranch),
       ];
     }
 
@@ -88,7 +88,7 @@ export class SparseMerkleTree {
 
   public async getPath(path: bigint): Promise<MerkleTreePath> {
     const [hash, treePath] = await Promise.all([
-      this._root.hashPromise,
+      this._root.calculateHash(),
       SparseMerkleTree.generatePath(path, this._root.left, this._root.right),
     ]);
 

@@ -18,7 +18,7 @@ async function validateTree(branch: Branch | RootNode | null, result?: TreeResul
 
   expect(branch).not.toBeNull();
   expect(branch!.path).toStrictEqual(result.path);
-  expect((await branch!.hashPromise).toJSON()).toStrictEqual(result.hash);
+  expect((await branch!.calculateHash()).toJSON()).toStrictEqual(result.hash);
   if (result.value) {
     const leaf = branch as LeafBranch;
     expect(leaf.value).toStrictEqual(HexConverter.decode(result.value));
@@ -133,13 +133,13 @@ describe('Sparse Merkle Tree tests', function () {
       'Cannot extend tree through leaf.',
     );
 
-    expect((await smt.root.hashPromise).toJSON()).toStrictEqual(
+    expect((await smt.root.hash).toJSON()).toStrictEqual(
       '00001fd5fffc41e26f249d04e435b71dbe86d079711131671ed54431a5e117291b42',
     );
 
     const rootNode = (smt as unknown as { root: RootNode }).root;
     expect(rootNode).toBeInstanceOf(RootNode);
-    expect((await rootNode.hashPromise).toJSON()).toStrictEqual(
+    expect((await rootNode.hash).toJSON()).toStrictEqual(
       '00001fd5fffc41e26f249d04e435b71dbe86d079711131671ed54431a5e117291b42',
     );
 
@@ -182,6 +182,12 @@ describe('Sparse Merkle Tree tests', function () {
       isPathValid: true,
       result: false,
     });
+    path = await smt.getPath(0b10n);
+    await expect(path.verify(0b10n)).resolves.toEqual({
+      isPathIncluded: true,
+      isPathValid: true,
+      result: true,
+    });
   });
 
   it('async result', async () => {
@@ -189,7 +195,7 @@ describe('Sparse Merkle Tree tests', function () {
     tree.addLeaf(0b10n, new Uint8Array([1, 2, 3]));
     tree.addLeaf(0b101n, new Uint8Array([4, 5, 6]));
 
-    await expect(tree.root.hashPromise).resolves.toEqual(
+    await expect(tree.root.hash).resolves.toEqual(
       new DataHash(
         HashAlgorithm.SHA256,
         HexConverter.decode('1c84da4abb4a2af2fa49e295032a5fbce583e2b8043a20246c27f327ee38d927'),

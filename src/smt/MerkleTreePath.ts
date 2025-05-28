@@ -79,24 +79,18 @@ export class MerkleTreePath {
     let currentPath = 1n;
     let currentHash: DataHash | null = null;
 
-    for (const step of this.steps) {
+    for (let i = 0; i < this.steps.length; i++) {
+      const step = this.steps[i];
       let hash: Uint8Array;
       if (step.branch === null) {
         hash = new Uint8Array(1);
       } else {
-        if (step.branch.value === null) {
-          const digest = await new DataHasher(HashAlgorithm.SHA256)
-            .update(BigintConverter.encode(step.path))
-            .update(currentHash?.data ?? new Uint8Array(1))
-            .digest();
-          hash = digest.data;
-        } else {
-          const digest = await new DataHasher(HashAlgorithm.SHA256)
-            .update(BigintConverter.encode(step.path))
-            .update(step.branch.value)
-            .digest();
-          hash = digest.data;
-        }
+        const bytes = i === 0 ? step.branch.value : currentHash?.data;
+        const digest = await new DataHasher(HashAlgorithm.SHA256)
+          .update(BigintConverter.encode(step.path))
+          .update(bytes ?? new Uint8Array(1))
+          .digest();
+        hash = digest.data;
 
         const length = BigInt(step.path.toString(2).length - 1);
         currentPath = (currentPath << length) | (step.path & ((1n << length) - 1n));

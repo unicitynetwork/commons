@@ -45,7 +45,7 @@ class MerkleTreePathStepBranch {
   }
 
   public toString(): string {
-    return this._value ? HexConverter.encode(this._value) : 'null';
+    return `MerkleTreePathStepBranch[${this._value ? HexConverter.encode(this._value) : 'null'}]`;
   }
 }
 
@@ -62,12 +62,18 @@ export class MerkleTreePathStep {
     public readonly branch: MerkleTreePathStepBranch | null,
   ) {}
 
-  public static async create(path: bigint, branch: Branch | null, sibling: Branch | null): Promise<MerkleTreePathStep> {
-    return new MerkleTreePathStep(
-      path,
-      (await sibling?.hashPromise) ?? null,
-      branch ? new MerkleTreePathStepBranch(branch instanceof LeafBranch ? branch.value : null) : null,
-    );
+  public static async create(path: bigint, value: Branch | null, sibling: Branch | null): Promise<MerkleTreePathStep> {
+    if (value == null) {
+      return new MerkleTreePathStep(path, (await sibling?.calculateHash()) ?? null, new MerkleTreePathStepBranch(null));
+    }
+
+    const siblingHash = await sibling?.calculateHash();
+    if (value instanceof LeafBranch) {
+      return new MerkleTreePathStep(path, siblingHash ?? null, new MerkleTreePathStepBranch(value.value));
+    }
+
+    const hash = await value.calculateChildrenHash();
+    return new MerkleTreePathStep(path, siblingHash ?? null, new MerkleTreePathStepBranch(hash.data));
   }
 
   public static isJSON(data: unknown): data is IMerkleTreePathStepJson {
