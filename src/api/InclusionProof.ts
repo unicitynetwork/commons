@@ -1,5 +1,5 @@
 import { Authenticator, IAuthenticatorJson } from './Authenticator.js';
-import { Transaction } from './Transaction.js';
+import { LeafValue } from './LeafValue.js';
 import { CborDecoder } from '../cbor/CborDecoder.js';
 import { CborEncoder } from '../cbor/CborEncoder.js';
 import { DataHash } from '../hash/DataHash.js';
@@ -76,8 +76,8 @@ export class InclusionProof {
         return InclusionProofVerificationStatus.NOT_AUTHENTICATED;
       }
 
-      const transaction = await Transaction.create(this.authenticator, this.transactionHash);
-      if (!transaction.verify(this.merkleTreePath.steps.at(0)?.branch?.value)) {
+      const leafValue = await LeafValue.create(this.authenticator, this.transactionHash);
+      if (!leafValue.equals(this.merkleTreePath.steps.at(0)?.branch?.value)) {
         return InclusionProofVerificationStatus.PATH_NOT_INCLUDED;
       }
     }

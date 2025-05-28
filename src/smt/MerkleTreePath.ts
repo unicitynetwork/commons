@@ -71,11 +71,10 @@ export class MerkleTreePath {
   public toJSON(): IMerkleTreePathJson {
     return {
       root: this.root.toJSON(),
-      steps: this.steps.map((step) => (step ? step.toJSON() : step)),
+      steps: this.steps.map((step) => step.toJSON()),
     };
   }
 
-  // TODO: Revisit verification logic at some point
   public async verify(requestId: bigint): Promise<MerkleTreePathVerificationResult> {
     let currentPath = 1n;
     let currentHash: DataHash | null = null;
