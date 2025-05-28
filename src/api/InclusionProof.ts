@@ -77,7 +77,7 @@ export class InclusionProof {
       }
 
       const transaction = await Transaction.create(this.authenticator, this.transactionHash);
-      if (!transaction.verify(this.merkleTreePath.steps.at(0)?.value)) {
+      if (!transaction.verify(this.merkleTreePath.steps.at(0)?.branch?.value)) {
         return InclusionProofVerificationStatus.PATH_NOT_INCLUDED;
       }
     }

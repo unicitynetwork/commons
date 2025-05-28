@@ -82,23 +82,21 @@ export class MerkleTreePath {
 
     for (const step of this.steps) {
       let hash: Uint8Array;
-      if (step.value === null) {
+      if (step.branch === null) {
         hash = new Uint8Array(1);
       } else {
-        if (step.value) {
-          hash = (
-            await new DataHasher(HashAlgorithm.SHA256)
-              .update(BigintConverter.encode(step.path))
-              .update(step.value)
-              .digest()
-          ).data;
+        if (step.branch.value === null) {
+          const digest = await new DataHasher(HashAlgorithm.SHA256)
+            .update(BigintConverter.encode(step.path))
+            .update(currentHash?.data ?? new Uint8Array(1))
+            .digest();
+          hash = digest.data;
         } else {
-          hash = (
-            await new DataHasher(HashAlgorithm.SHA256)
-              .update(BigintConverter.encode(step.path))
-              .update(currentHash?.data ?? new Uint8Array(1))
-              .digest()
-          ).data;
+          const digest = await new DataHasher(HashAlgorithm.SHA256)
+            .update(BigintConverter.encode(step.path))
+            .update(step.branch.value)
+            .digest();
+          hash = digest.data;
         }
 
         const length = BigInt(step.path.toString(2).length - 1);
