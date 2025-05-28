@@ -10,11 +10,11 @@ import { dedent } from '../util/StringUtils.js';
 type MerkleTreePathStepBranchJson = [string?];
 class MerkleTreePathStepBranch {
   public constructor(private readonly _value: Uint8Array | null) {
-    this._value = _value ? new Uint8Array(_value) : _value;
+    this._value = _value ? new Uint8Array(_value) : null;
   }
 
   public get value(): Uint8Array | null {
-    return this._value ? new Uint8Array(this._value) : this._value;
+    return this._value ? new Uint8Array(this._value) : null;
   }
 
   public static isJSON(data: unknown): data is MerkleTreePathStepBranchJson {
@@ -129,7 +129,7 @@ export class MerkleTreePathStep {
     return dedent`
       Merkle Tree Path Step
         Path: ${this.path.toString(2)}
-        Branch: ${this.branch?.toString() ?? null}
-        Sibling: ${this.sibling?.toString() ?? null}`;
+        Branch: ${this.branch?.toString() ?? 'null'}
+        Sibling: ${this.sibling?.toString() ?? 'null'}`;
   }
 }
