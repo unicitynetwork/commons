@@ -9,7 +9,7 @@ import { dedent } from '../util/StringUtils.js';
 
 export interface IMerkleTreePathJson {
   readonly root: string;
-  readonly steps: ReadonlyArray<IMerkleTreePathStepJson | null>;
+  readonly steps: ReadonlyArray<IMerkleTreePathStepJson>;
 }
 
 export class MerkleTreePathVerificationResult {
@@ -26,7 +26,7 @@ export class MerkleTreePathVerificationResult {
 export class MerkleTreePath {
   public constructor(
     public readonly root: DataHash,
-    public readonly steps: ReadonlyArray<MerkleTreePathStep | null>,
+    public readonly steps: ReadonlyArray<MerkleTreePathStep>,
   ) {}
 
   public static fromJSON(data: unknown): MerkleTreePath {
@@ -57,58 +57,51 @@ export class MerkleTreePath {
 
     return new MerkleTreePath(
       DataHash.fromCBOR(data[0]),
-      steps.map((step) => CborDecoder.readOptional(step, MerkleTreePathStep.fromCBOR)),
+      steps.map((step) => MerkleTreePathStep.fromCBOR(step)),
     );
   }
 
   public toCBOR(): Uint8Array {
     return CborEncoder.encodeArray([
       this.root.toCBOR(),
-      CborEncoder.encodeArray(
-        this.steps.map((step: MerkleTreePathStep | null) => step?.toCBOR() ?? CborEncoder.encodeNull()),
-      ),
+      CborEncoder.encodeArray(this.steps.map((step: MerkleTreePathStep) => step.toCBOR())),
     ]);
   }
 
   public toJSON(): IMerkleTreePathJson {
     return {
       root: this.root.toJSON(),
-      steps: this.steps.map((step) => (step ? step.toJSON() : null)),
+      steps: this.steps.map((step) => step.toJSON()),
     };
   }
 
-  // TODO: Revisit verification logic at some point
   public async verify(requestId: bigint): Promise<MerkleTreePathVerificationResult> {
     let currentPath = 1n;
     let currentHash: DataHash | null = null;
 
-    for (const step of this.steps) {
-      if (step == null) {
-        currentHash = await new DataHasher(HashAlgorithm.SHA256).update(new Uint8Array(1)).digest();
-        continue;
-      }
-
-      let hash: DataHash;
-      if (step.value) {
-        hash = await new DataHasher(HashAlgorithm.SHA256)
-          .update(BigintConverter.encode(step.path))
-          .update(step.value)
-          .digest();
+    for (let i = 0; i < this.steps.length; i++) {
+      const step = this.steps[i];
+      let hash: Uint8Array;
+      if (step.branch === null) {
+        hash = new Uint8Array(1);
       } else {
-        hash = await new DataHasher(HashAlgorithm.SHA256)
+        const bytes = i === 0 ? step.branch.value : currentHash?.data;
+        const digest = await new DataHasher(HashAlgorithm.SHA256)
           .update(BigintConverter.encode(step.path))
-          .update(currentHash?.data ?? new Uint8Array(1))
+          .update(bytes ?? new Uint8Array(1))
           .digest();
+        hash = digest.data;
+
+        const length = BigInt(step.path.toString(2).length - 1);
+        currentPath = (currentPath << length) | (step.path & ((1n << length) - 1n));
       }
 
       const siblingHash = step.sibling?.data ?? new Uint8Array(1);
       const isRight = step.path & 1n;
       currentHash = await new DataHasher(HashAlgorithm.SHA256)
-        .update(isRight ? siblingHash : hash.data)
-        .update(isRight ? hash.data : siblingHash)
+        .update(isRight ? siblingHash : hash)
+        .update(isRight ? hash : siblingHash)
         .digest();
-      const length = BigInt(step.path.toString(2).length - 1);
-      currentPath = (currentPath << length) | (step.path & ((1n << length) - 1n));
     }
 
     return new MerkleTreePathVerificationResult(

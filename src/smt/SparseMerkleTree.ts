@@ -37,38 +37,34 @@ export class SparseMerkleTree {
     remainingPath: bigint,
     left: Branch | null,
     right: Branch | null,
-  ): Promise<ReadonlyArray<MerkleTreePathStep | null>> {
+  ): Promise<ReadonlyArray<MerkleTreePathStep>> {
     const isRight = remainingPath & 1n;
     const branch = isRight ? right : left;
     const siblingBranch = isRight ? left : right;
 
     if (branch === null) {
-      return [null];
+      return [await MerkleTreePathStep.createWithoutBranch(remainingPath, siblingBranch)];
     }
 
     const commonPath = SparseMerkleTree.calculateCommonPath(remainingPath, branch.path);
 
     if (branch.path === commonPath.path) {
       if (branch instanceof LeafBranch) {
-        return [await MerkleTreePathStep.createFromLeaf(branch, siblingBranch)];
+        return [await MerkleTreePathStep.create(branch.path, branch, siblingBranch)];
       }
 
       // If path has ended, return the current non leaf branch data
       if (remainingPath >> commonPath.length === 1n) {
-        return [await MerkleTreePathStep.createFromBranch(branch, siblingBranch)];
+        return [await MerkleTreePathStep.create(branch.path, branch, siblingBranch)];
       }
 
       return [
         ...(await this.generatePath(remainingPath >> commonPath.length, branch.left, branch.right)),
-        await MerkleTreePathStep.createFromBranch(branch, siblingBranch),
+        await MerkleTreePathStep.create(branch.path, null, siblingBranch),
       ];
     }
 
-    if (branch instanceof LeafBranch) {
-      return [await MerkleTreePathStep.createFromLeaf(branch, siblingBranch)];
-    }
-
-    return [await MerkleTreePathStep.createFromBranch(branch, siblingBranch)];
+    return [await MerkleTreePathStep.create(branch.path, branch, siblingBranch)];
   }
 
   public addLeaf(path: bigint, value: Uint8Array): void {
@@ -90,13 +86,13 @@ export class SparseMerkleTree {
     this._root = new RootNode(this.algorithm, left, right);
   }
 
-  public getPath(path: bigint): Promise<MerkleTreePath> {
-    return Promise.all([
-      this._root.hashPromise,
+  public async getPath(path: bigint): Promise<MerkleTreePath> {
+    const [hash, treePath] = await Promise.all([
+      this._root.calculateHash(),
       SparseMerkleTree.generatePath(path, this._root.left, this._root.right),
-    ]).then(([hash, path]) => {
-      return new MerkleTreePath(hash, path);
-    });
+    ]);
+
+    return new MerkleTreePath(hash, treePath);
   }
 
   public toString(): string {
