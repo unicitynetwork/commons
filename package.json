@@ -7,6 +7,9 @@
   "exports": {
     "./lib/*": "./lib/*"
   },
+  "browser": {
+    "./lib/hash/NodeDataHasher.js": "./lib/hash/SubtleCryptoDataHasher.js"
+  },
   "scripts": {
     "build": "tsc",
     "lint": "eslint \"src/**/*\" \"tests/**/*\"" ,
