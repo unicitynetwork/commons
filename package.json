@@ -16,7 +16,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/unicitynetwork/shared.git"
+    "url": "git+https://github.com/unicitynetwork/commons.git"
   },
   "license": "ISC",
   "dependencies": {
