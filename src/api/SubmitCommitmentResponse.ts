@@ -1,13 +1,13 @@
-import { RequestId } from './RequestId';
-import { CborEncoder } from '../cbor/CborEncoder';
-import { DataHash } from '../hash/DataHash';
-import { DataHasher } from '../hash/DataHasher';
-import { HashAlgorithm } from '../hash/HashAlgorithm';
-import { ISigningService } from '../signing/ISigningService';
-import { Signature } from '../signing/Signature';
-import { SigningService } from '../signing/SigningService';
-import { HexConverter } from '../util/HexConverter';
-import { dedent } from '../util/StringUtils';
+import { RequestId } from './RequestId.js';
+import { CborEncoder } from '../cbor/CborEncoder.js';
+import { DataHash } from '../hash/DataHash.js';
+import { DataHasher } from '../hash/DataHasher.js';
+import { HashAlgorithm } from '../hash/HashAlgorithm.js';
+import { ISigningService } from '../signing/ISigningService.js';
+import { Signature } from '../signing/Signature.js';
+import { SigningService } from '../signing/SigningService.js';
+import { HexConverter } from '../util/HexConverter.js';
+import { dedent } from '../util/StringUtils.js';
 
 /**
  * Possible results from the aggregator when submitting a commitment.
@@ -81,9 +81,9 @@ class Request {
 
   public toJSON(): IRequestJson {
     return {
-      service: this.service,
       method: this.method,
       requestId: this.requestId.toJSON(),
+      service: this.service,
       stateHash: this.stateHash.toJSON(),
       transactionHash: this.transactionHash.toJSON(),
     };
@@ -161,21 +161,6 @@ export class SubmitCommitmentResponse {
   }
 
   /**
-   * Convert the response to a JSON object.
-   *
-   * @returns JSON representation of the response
-   */
-  public toJSON(): ISubmitCommitmentResponseJson {
-    return {
-      status: this.status,
-      request: this.request?.toJSON(),
-      algorithm: this.algorithm,
-      publicKey: this.publicKey,
-      signature: this.signature?.toJSON(),
-    };
-  }
-
-  /**
    * Check if the given data is a valid JSON response object.
    *
    * @param data Raw response
@@ -183,6 +168,21 @@ export class SubmitCommitmentResponse {
    */
   public static isJSON(data: unknown): data is ISubmitCommitmentResponseJson {
     return typeof data === 'object' && data !== null && 'status' in data && typeof data.status === 'string';
+  }
+
+  /**
+   * Convert the response to a JSON object.
+   *
+   * @returns JSON representation of the response
+   */
+  public toJSON(): ISubmitCommitmentResponseJson {
+    return {
+      algorithm: this.algorithm,
+      publicKey: this.publicKey,
+      request: this.request?.toJSON(),
+      signature: this.signature?.toJSON(),
+      status: this.status,
+    };
   }
 
   public async addSignedReceipt(
@@ -210,9 +210,9 @@ export class SubmitCommitmentResponse {
    *
    * @returns True if the receipt is valid, false otherwise
    */
-  public async verifyReceipt(): Promise<boolean> {
+  public verifyReceipt(): Promise<boolean> {
     if (!this.signature || !this.publicKey || !this.request) {
-      return false;
+      return Promise.resolve(false);
     }
 
     return SigningService.verifyWithPublicKey(

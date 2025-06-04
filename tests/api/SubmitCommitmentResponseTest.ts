@@ -12,11 +12,11 @@ describe('SubmitCommitmentResponse', () => {
 
     const json1 = response1.toJSON();
     expect(json1).toEqual({
-      status: SubmitCommitmentStatus.SUCCESS,
-      request: undefined,
       algorithm: undefined,
       publicKey: undefined,
+      request: undefined,
       signature: undefined,
+      status: SubmitCommitmentStatus.SUCCESS,
     });
 
     const decoded1 = await SubmitCommitmentResponse.fromJSON(json1);
@@ -31,11 +31,11 @@ describe('SubmitCommitmentResponse', () => {
 
     const json2 = response2.toJSON();
     expect(json2).toEqual({
-      status: SubmitCommitmentStatus.AUTHENTICATOR_VERIFICATION_FAILED,
-      request: undefined,
       algorithm: undefined,
       publicKey: undefined,
+      request: undefined,
       signature: undefined,
+      status: SubmitCommitmentStatus.AUTHENTICATOR_VERIFICATION_FAILED,
     });
 
     const decoded2 = await SubmitCommitmentResponse.fromJSON(json2);
@@ -55,17 +55,17 @@ describe('SubmitCommitmentResponse', () => {
     );
 
     const jsonWithRequest = {
-      status: SubmitCommitmentStatus.SUCCESS,
+      algorithm: 'secp256k1',
+      publicKey: HexConverter.encode(signingService.publicKey),
       request: {
-        service: 'aggregator',
         method: 'submitCommitment',
         requestId: requestId.toJSON(),
+        service: 'aggregator',
         stateHash: stateHash.toJSON(),
         transactionHash: transactionHash.toJSON(),
       },
-      algorithm: 'secp256k1',
-      publicKey: HexConverter.encode(signingService.publicKey),
       signature: signature.toJSON(),
+      status: SubmitCommitmentStatus.SUCCESS,
     };
 
     const decoded3 = await SubmitCommitmentResponse.fromJSON(jsonWithRequest);
@@ -95,18 +95,18 @@ describe('SubmitCommitmentResponse', () => {
     expect(SubmitCommitmentResponse.isJSON(validJson1)).toBe(true);
 
     const validJson2 = {
-      status: SubmitCommitmentStatus.AUTHENTICATOR_VERIFICATION_FAILED,
+      algorithm: 'secp256k1',
+      publicKey: '0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798',
       request: {
-        service: 'aggregator',
         method: 'submitCommitment',
         requestId: '0000ea659cdc838619b3767c057fdf8e6d99fde2680c5d8517eb06761c0878d40c40',
+        service: 'aggregator',
         stateHash: '00000000000000000000000000000000000000000000000000000000000000000000',
         transactionHash: '00010000000000000000000000000000000000000000000000000000000000000000',
       },
-      algorithm: 'secp256k1',
-      publicKey: '0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798',
       signature:
         'a0b37f8fba683cc68f6574cd43b39f0343a50008bf6ccea9d13231d9e7e2e1e411edc8d307254296264aebfc3dc76cd8b668373a072fd64665b50000e9fcce5201',
+      status: SubmitCommitmentStatus.AUTHENTICATOR_VERIFICATION_FAILED,
     };
     expect(SubmitCommitmentResponse.isJSON(validJson2)).toBe(true);
 
@@ -215,7 +215,9 @@ describe('SubmitCommitmentResponse', () => {
     await responseWrongSignature.addSignedReceipt(requestId, stateHash, transactionHash, wrongSigningService);
 
     // Tamper with the public key to mismatch the signature
-    (responseWrongSignature as any).publicKey = HexConverter.encode(signingService.publicKey);
+    (responseWrongSignature as SubmitCommitmentResponse & { publicKey?: string }).publicKey = HexConverter.encode(
+      signingService.publicKey,
+    );
     expect(await responseWrongSignature.verifyReceipt()).toBe(false);
   });
 });

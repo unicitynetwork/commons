@@ -31,10 +31,10 @@ describe('SubmitCommitmentRequest', () => {
 
     const json1 = request1.toJSON();
     expect(json1).toEqual({
-      requestId: requestId.toJSON(),
-      transactionHash: transactionHash.toJSON(),
       authenticator: authenticator.toJSON(),
       receipt: undefined,
+      requestId: requestId.toJSON(),
+      transactionHash: transactionHash.toJSON(),
     });
 
     const decoded1 = SubmitCommitmentRequest.fromJSON(json1);
@@ -49,10 +49,10 @@ describe('SubmitCommitmentRequest', () => {
 
     const json2 = request2.toJSON();
     expect(json2).toEqual({
-      requestId: requestId.toJSON(),
-      transactionHash: transactionHash.toJSON(),
       authenticator: authenticator.toJSON(),
       receipt: true,
+      requestId: requestId.toJSON(),
+      transactionHash: transactionHash.toJSON(),
     });
 
     const decoded2 = SubmitCommitmentRequest.fromJSON(json2);
@@ -64,10 +64,10 @@ describe('SubmitCommitmentRequest', () => {
 
     const json3 = request3.toJSON();
     expect(json3).toEqual({
-      requestId: requestId.toJSON(),
-      transactionHash: transactionHash.toJSON(),
       authenticator: authenticator.toJSON(),
       receipt: false,
+      requestId: requestId.toJSON(),
+      transactionHash: transactionHash.toJSON(),
     });
 
     const decoded3 = SubmitCommitmentRequest.fromJSON(json3);
@@ -78,8 +78,6 @@ describe('SubmitCommitmentRequest', () => {
   it('should validate JSON structure correctly', () => {
     // Valid JSON structure
     const validJson = {
-      requestId: '0000ea659cdc838619b3767c057fdf8e6d99fde2680c5d8517eb06761c0878d40c40',
-      transactionHash: '00010000000000000000000000000000000000000000000000000000000000000000',
       authenticator: {
         algorithm: 'secp256k1',
         publicKey: '0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798',
@@ -88,6 +86,8 @@ describe('SubmitCommitmentRequest', () => {
         stateHash: '00000000000000000000000000000000000000000000000000000000000000000000',
       },
       receipt: true,
+      requestId: '0000ea659cdc838619b3767c057fdf8e6d99fde2680c5d8517eb06761c0878d40c40',
+      transactionHash: '00010000000000000000000000000000000000000000000000000000000000000000',
     };
 
     expect(SubmitCommitmentRequest.isJSON(validJson)).toBe(true);
@@ -104,9 +104,9 @@ describe('SubmitCommitmentRequest', () => {
 
     // Missing authenticator
     const missingAuthenticator = {
+      receipt: true,
       requestId: '0000ea659cdc838619b3767c057fdf8e6d99fde2680c5d8517eb06761c0878d40c40',
       transactionHash: '00010000000000000000000000000000000000000000000000000000000000000000',
-      receipt: true,
     };
     expect(SubmitCommitmentRequest.isJSON(missingAuthenticator)).toBe(false);
 

@@ -1,6 +1,6 @@
-import { Authenticator, IAuthenticatorJson } from './Authenticator';
-import { RequestId } from './RequestId';
-import { DataHash } from '../hash/DataHash';
+import { Authenticator, IAuthenticatorJson } from './Authenticator.js';
+import { RequestId } from './RequestId.js';
+import { DataHash } from '../hash/DataHash.js';
 
 /**
  * JSON representation of a submit commitment request.
@@ -22,20 +22,6 @@ export class SubmitCommitmentRequest {
     public readonly authenticator: Authenticator,
     public readonly receipt?: boolean,
   ) {}
-
-  /**
-   * Convert the request to a JSON object.
-   *
-   * @returns JSON object
-   */
-  public toJSON(): ISubmitCommitmentRequestJson {
-    return {
-      requestId: this.requestId.toJSON(),
-      transactionHash: this.transactionHash.toJSON(),
-      authenticator: this.authenticator.toJSON(),
-      receipt: this.receipt,
-    };
-  }
 
   /**
    * Parse a JSON object into a SubmitCommitmentRequest object.
@@ -74,5 +60,19 @@ export class SubmitCommitmentRequest {
       'transactionHash' in data &&
       typeof data.transactionHash === 'string'
     );
+  }
+
+  /**
+   * Convert the request to a JSON object.
+   *
+   * @returns JSON object
+   */
+  public toJSON(): ISubmitCommitmentRequestJson {
+    return {
+      authenticator: this.authenticator.toJSON(),
+      receipt: this.receipt,
+      requestId: this.requestId.toJSON(),
+      transactionHash: this.transactionHash.toJSON(),
+    };
   }
 }
