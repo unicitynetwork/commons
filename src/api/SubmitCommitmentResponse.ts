@@ -118,15 +118,22 @@ export interface ISubmitCommitmentResponseJson {
 }
 
 /**
+ * Receipt information for a successful commitment submission.
+ */
+export interface IReceipt {
+  algorithm: string;
+  publicKey: string;
+  signature: Signature;
+  request: Request;
+}
+
+/**
  * Response object returned by the aggregator on commitment submission.
  */
 export class SubmitCommitmentResponse {
   public constructor(
     public readonly status: SubmitCommitmentStatus,
-    public request?: Request,
-    public algorithm?: string,
-    public publicKey?: string,
-    public signature?: Signature,
+    public receipt?: IReceipt,
   ) {}
 
   /**
@@ -141,23 +148,25 @@ export class SubmitCommitmentResponse {
       throw new Error('Parsing submit state transition response failed.');
     }
 
-    const request = data.request
-      ? await Request.create(
-          data.request.service,
-          data.request.method,
-          RequestId.fromJSON(data.request.requestId),
-          DataHash.fromJSON(data.request.stateHash),
-          DataHash.fromJSON(data.request.transactionHash),
-        )
-      : undefined;
+    let receipt: IReceipt | undefined;
+    if (data.request && data.algorithm && data.publicKey && data.signature) {
+      const request = await Request.create(
+        data.request.service,
+        data.request.method,
+        RequestId.fromJSON(data.request.requestId),
+        DataHash.fromJSON(data.request.stateHash),
+        DataHash.fromJSON(data.request.transactionHash),
+      );
 
-    return new SubmitCommitmentResponse(
-      data.status,
-      request,
-      data.algorithm,
-      data.publicKey,
-      data.signature ? Signature.fromJSON(data.signature) : undefined,
-    );
+      receipt = {
+        algorithm: data.algorithm,
+        publicKey: data.publicKey,
+        request,
+        signature: Signature.fromJSON(data.signature),
+      };
+    }
+
+    return new SubmitCommitmentResponse(data.status, receipt);
   }
 
   /**
@@ -177,10 +186,10 @@ export class SubmitCommitmentResponse {
    */
   public toJSON(): ISubmitCommitmentResponseJson {
     return {
-      algorithm: this.algorithm,
-      publicKey: this.publicKey,
-      request: this.request?.toJSON(),
-      signature: this.signature?.toJSON(),
+      algorithm: this.receipt?.algorithm,
+      publicKey: this.receipt?.publicKey,
+      request: this.receipt?.request.toJSON(),
+      signature: this.receipt?.signature.toJSON(),
       status: this.status,
     };
   }
@@ -191,10 +200,7 @@ export class SubmitCommitmentResponse {
     transactionHash: DataHash,
     signingService: ISigningService<Signature>,
   ): Promise<void> {
-    this.algorithm = signingService.algorithm;
-    this.publicKey = HexConverter.encode(signingService.publicKey);
-
-    this.request = await Request.create(
+    const request = await Request.create(
       'aggregator', // TODO use actual service identifier
       'submit_commitment',
       requestId,
@@ -202,7 +208,14 @@ export class SubmitCommitmentResponse {
       transactionHash,
     );
 
-    this.signature = await signingService.sign(this.request.hash.imprint);
+    const signature = await signingService.sign(request.hash.imprint);
+
+    this.receipt = {
+      algorithm: signingService.algorithm,
+      publicKey: HexConverter.encode(signingService.publicKey),
+      request,
+      signature,
+    };
   }
 
   /**
@@ -211,14 +224,14 @@ export class SubmitCommitmentResponse {
    * @returns True if the receipt is valid, false otherwise
    */
   public verifyReceipt(): Promise<boolean> {
-    if (!this.signature || !this.publicKey || !this.request) {
+    if (!this.receipt) {
       return Promise.resolve(false);
     }
 
     return SigningService.verifyWithPublicKey(
-      this.request.hash.imprint,
-      this.signature.bytes,
-      HexConverter.decode(this.publicKey),
+      this.receipt.request.hash.imprint,
+      this.receipt.signature.bytes,
+      HexConverter.decode(this.receipt.publicKey),
     );
   }
 }

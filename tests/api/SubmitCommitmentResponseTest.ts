@@ -7,7 +7,7 @@ import { HexConverter } from '../../src/util/HexConverter.js';
 
 describe('SubmitCommitmentResponse', () => {
   it('should encode and decode JSON to exactly same object', async () => {
-    // Test simple success response without request
+    // Test simple success response without receipt
     const response1 = new SubmitCommitmentResponse(SubmitCommitmentStatus.SUCCESS);
 
     const json1 = response1.toJSON();
@@ -21,10 +21,7 @@ describe('SubmitCommitmentResponse', () => {
 
     const decoded1 = await SubmitCommitmentResponse.fromJSON(json1);
     expect(decoded1.status).toBe(SubmitCommitmentStatus.SUCCESS);
-    expect(decoded1.request).toBeUndefined();
-    expect(decoded1.algorithm).toBeUndefined();
-    expect(decoded1.publicKey).toBeUndefined();
-    expect(decoded1.signature).toBeUndefined();
+    expect(decoded1.receipt).toBeUndefined();
 
     // Test error response
     const response2 = new SubmitCommitmentResponse(SubmitCommitmentStatus.AUTHENTICATOR_VERIFICATION_FAILED);
@@ -70,13 +67,13 @@ describe('SubmitCommitmentResponse', () => {
 
     const decoded3 = await SubmitCommitmentResponse.fromJSON(jsonWithRequest);
     expect(decoded3.status).toBe(SubmitCommitmentStatus.SUCCESS);
-    expect(decoded3.request).toBeDefined();
-    expect(decoded3.request?.requestId).toStrictEqual(requestId);
-    expect(decoded3.request?.stateHash).toStrictEqual(stateHash);
-    expect(decoded3.request?.transactionHash).toStrictEqual(transactionHash);
-    expect(decoded3.algorithm).toBe('secp256k1');
-    expect(decoded3.publicKey).toBe(HexConverter.encode(signingService.publicKey));
-    expect(decoded3.signature).toStrictEqual(signature);
+    expect(decoded3.receipt).toBeDefined();
+    expect(decoded3.receipt?.request.requestId).toStrictEqual(requestId);
+    expect(decoded3.receipt?.request.stateHash).toStrictEqual(stateHash);
+    expect(decoded3.receipt?.request.transactionHash).toStrictEqual(transactionHash);
+    expect(decoded3.receipt?.algorithm).toBe('secp256k1');
+    expect(decoded3.receipt?.publicKey).toBe(HexConverter.encode(signingService.publicKey));
+    expect(decoded3.receipt?.signature).toStrictEqual(signature);
 
     // Test that toJSON() works with the decoded response
     const json3 = decoded3.toJSON();
@@ -170,42 +167,26 @@ describe('SubmitCommitmentResponse', () => {
 
     expect(await response.verifyReceipt()).toBe(true);
 
-    expect(response.algorithm).toBe('secp256k1');
-    expect(response.publicKey).toBe(HexConverter.encode(signingService.publicKey));
-    expect(response.signature).toBeDefined();
-    expect(response.request).toBeDefined();
-    expect(response.request?.service).toBe('aggregator');
-    expect(response.request?.method).toBe('submit_commitment');
-    expect(response.request?.requestId).toStrictEqual(requestId);
-    expect(response.request?.stateHash).toStrictEqual(stateHash);
-    expect(response.request?.transactionHash).toStrictEqual(transactionHash);
+    // Verify that all receipt fields are set
+    expect(response.receipt).toBeDefined();
+    expect(response.receipt?.algorithm).toBe('secp256k1');
+    expect(response.receipt?.publicKey).toBe(HexConverter.encode(signingService.publicKey));
+    expect(response.receipt?.signature).toBeDefined();
+    expect(response.receipt?.request).toBeDefined();
+    expect(response.receipt?.request.service).toBe('aggregator');
+    expect(response.receipt?.request.method).toBe('submit_commitment');
+    expect(response.receipt?.request.requestId).toStrictEqual(requestId);
+    expect(response.receipt?.request.stateHash).toStrictEqual(stateHash);
+    expect(response.receipt?.request.transactionHash).toStrictEqual(transactionHash);
 
     // Test that JSON serialization and deserialization preserves verification
     const json = response.toJSON();
     const deserializedResponse = await SubmitCommitmentResponse.fromJSON(json);
     expect(await deserializedResponse.verifyReceipt()).toBe(true);
 
-    // Test responses without required fields for verification should fail
-    const responseNoSignature = new SubmitCommitmentResponse(SubmitCommitmentStatus.SUCCESS);
-    expect(await responseNoSignature.verifyReceipt()).toBe(false);
-
-    const responseNoPublicKey = new SubmitCommitmentResponse(
-      SubmitCommitmentStatus.SUCCESS,
-      undefined,
-      'secp256k1',
-      undefined,
-      response.signature, // Use the real signature but no public key
-    );
-    expect(await responseNoPublicKey.verifyReceipt()).toBe(false);
-
-    const responseNoRequest = new SubmitCommitmentResponse(
-      SubmitCommitmentStatus.SUCCESS,
-      undefined, // No request
-      'secp256k1',
-      HexConverter.encode(signingService.publicKey),
-      response.signature,
-    );
-    expect(await responseNoRequest.verifyReceipt()).toBe(false);
+    // Test responses without receipt should fail verification
+    const responseNoReceipt = new SubmitCommitmentResponse(SubmitCommitmentStatus.SUCCESS);
+    expect(await responseNoReceipt.verifyReceipt()).toBe(false);
 
     // Test with wrong signature should fail verification
     const wrongSigningService = new SigningService(
@@ -215,9 +196,11 @@ describe('SubmitCommitmentResponse', () => {
     await responseWrongSignature.addSignedReceipt(requestId, stateHash, transactionHash, wrongSigningService);
 
     // Tamper with the public key to mismatch the signature
-    (responseWrongSignature as SubmitCommitmentResponse & { publicKey?: string }).publicKey = HexConverter.encode(
-      signingService.publicKey,
-    );
+    if (responseWrongSignature.receipt) {
+      (responseWrongSignature.receipt as { publicKey: string }).publicKey = HexConverter.encode(
+        signingService.publicKey,
+      );
+    }
     expect(await responseWrongSignature.verifyReceipt()).toBe(false);
   });
 });
