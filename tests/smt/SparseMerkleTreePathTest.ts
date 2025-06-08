@@ -1,5 +1,7 @@
 import { DataHash } from '../../src/hash/DataHash.js';
+import { DataHasherFactory } from '../../src/hash/DataHasherFactory.js';
 import { HashAlgorithm } from '../../src/hash/HashAlgorithm.js';
+import { NodeDataHasher } from '../../src/hash/NodeDataHasher.js';
 import { MerkleTreePath } from '../../src/smt/MerkleTreePath.js';
 import { MerkleTreePathStep } from '../../src/smt/MerkleTreePathStep.js';
 import { PendingLeafBranch } from '../../src/smt/PendingLeafBranch.js';
@@ -10,7 +12,9 @@ describe('SparseMerkleTreePath', () => {
     const path = new MerkleTreePath(DataHash.fromImprint(new Uint8Array(34)), [
       MerkleTreePathStep.create(
         0n,
-        await new PendingLeafBranch(0n, new Uint8Array(10)).finalize(HashAlgorithm.SHA256),
+        await new PendingLeafBranch(0n, new Uint8Array(10)).finalize(
+          new DataHasherFactory(HashAlgorithm.SHA256, NodeDataHasher),
+        ),
         null,
       ),
     ]);

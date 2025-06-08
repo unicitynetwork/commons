@@ -1,5 +1,7 @@
 import { DataHash } from '../../src/hash/DataHash.js';
+import { DataHasherFactory } from '../../src/hash/DataHasherFactory.js';
 import { HashAlgorithm } from '../../src/hash/HashAlgorithm.js';
+import { NodeDataHasher } from '../../src/hash/NodeDataHasher.js';
 import { Branch } from '../../src/smt/Branch.js';
 import { LeafBranch } from '../../src/smt/LeafBranch.js';
 import { NodeBranch } from '../../src/smt/NodeBranch.js';
@@ -119,7 +121,7 @@ describe('Sparse Merkle Tree tests', function () {
   };
 
   it('tree should be half calculated', async () => {
-    const smt = new SparseMerkleTreeBuilder(HashAlgorithm.SHA256);
+    const smt = new SparseMerkleTreeBuilder(new DataHasherFactory(HashAlgorithm.SHA256, NodeDataHasher));
 
     smt.addLeaf(0b10n, new Uint8Array([1, 2, 3]));
     await smt.calculateRoot();
@@ -134,7 +136,7 @@ describe('Sparse Merkle Tree tests', function () {
   });
 
   it('should verify the tree', async () => {
-    const smt = new SparseMerkleTreeBuilder(HashAlgorithm.SHA256);
+    const smt = new SparseMerkleTreeBuilder(new DataHasherFactory(HashAlgorithm.SHA256, NodeDataHasher));
     const textEncoder = new TextEncoder();
 
     for (const leaf of leavesSparse) {
@@ -153,7 +155,7 @@ describe('Sparse Merkle Tree tests', function () {
   });
 
   it('get path', async () => {
-    const smt = new SparseMerkleTreeBuilder(HashAlgorithm.SHA256);
+    const smt = new SparseMerkleTreeBuilder(new DataHasherFactory(HashAlgorithm.SHA256, NodeDataHasher));
     const textEncoder = new TextEncoder();
 
     for (const leaf of leavesSparse) {
@@ -188,7 +190,9 @@ describe('Sparse Merkle Tree tests', function () {
       result: true,
     });
 
-    const emptyRoot = await new SparseMerkleTreeBuilder(HashAlgorithm.SHA256).calculateRoot();
+    const emptyRoot = await new SparseMerkleTreeBuilder(
+      new DataHasherFactory(HashAlgorithm.SHA256, NodeDataHasher),
+    ).calculateRoot();
     path = emptyRoot.getPath(0b100n);
     await expect(path.verify(0b10n)).resolves.toEqual({
       isPathIncluded: false,

@@ -5,14 +5,14 @@ import { PendingLeafBranch } from './PendingLeafBranch.js';
 import { PendingNodeBranch } from './PendingNodeBranch.js';
 import { RootNode } from './RootNode.js';
 import { calculateCommonPath } from './SparseMerkleTreePathUtils.js';
-import { DataHasher } from '../hash/DataHasher.js';
-import { HashAlgorithm } from '../hash/HashAlgorithm.js';
+import { IDataHasher } from '../hash/IDataHasher.js';
+import { IDataHasherFactory } from '../hash/IDataHasherFactory.js';
 
 export class SparseMerkleTreeBuilder {
   private left: PendingBranch | Branch | null = null;
   private right: PendingBranch | Branch | null = null;
 
-  public constructor(public readonly algorithm: HashAlgorithm) {}
+  public constructor(public readonly factory: IDataHasherFactory<IDataHasher>) {}
 
   public addLeaf(path: bigint, valueRef: Uint8Array): void {
     const isRight = path & 1n;
@@ -25,11 +25,9 @@ export class SparseMerkleTreeBuilder {
   }
 
   public async calculateRoot(): Promise<RootNode> {
-    const [left, right] = await Promise.all([
-      this.left?.finalize(this.algorithm),
-      this.right?.finalize(this.algorithm),
-    ]);
-    const hash = await new DataHasher(this.algorithm)
+    const [left, right] = await Promise.all([this.left?.finalize(this.factory), this.right?.finalize(this.factory)]);
+    const hash = await this.factory
+      .create()
       .update(left?.hash.data ?? new Uint8Array(1))
       .update(right?.hash.data ?? new Uint8Array(1))
       .digest();

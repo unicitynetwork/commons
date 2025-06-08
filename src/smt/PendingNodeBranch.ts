@@ -1,7 +1,7 @@
 import { NodeBranch } from './NodeBranch.js';
 import { PendingBranch } from './PendingBranch.js';
-import { DataHasher } from '../hash/DataHasher.js';
-import { HashAlgorithm } from '../hash/HashAlgorithm.js';
+import { IDataHasher } from '../hash/IDataHasher.js';
+import { IDataHasherFactory } from '../hash/IDataHasherFactory.js';
 import { BigintConverter } from '../util/BigintConverter.js';
 
 export class PendingNodeBranch {
@@ -11,13 +11,10 @@ export class PendingNodeBranch {
     public readonly right: PendingBranch,
   ) {}
 
-  public async finalize(algorithm: HashAlgorithm): Promise<NodeBranch> {
-    const [left, right] = await Promise.all([this.left.finalize(algorithm), this.right.finalize(algorithm)]);
-    const childrenHash = await new DataHasher(algorithm).update(left.hash.data).update(right.hash.data).digest();
-    const hash = await new DataHasher(algorithm)
-      .update(BigintConverter.encode(this.path))
-      .update(childrenHash.data)
-      .digest();
+  public async finalize(factory: IDataHasherFactory<IDataHasher>): Promise<NodeBranch> {
+    const [left, right] = await Promise.all([this.left.finalize(factory), this.right.finalize(factory)]);
+    const childrenHash = await factory.create().update(left.hash.data).update(right.hash.data).digest();
+    const hash = await factory.create().update(BigintConverter.encode(this.path)).update(childrenHash.data).digest();
     return new NodeBranch(this.path, left, right, childrenHash, hash);
   }
 }
