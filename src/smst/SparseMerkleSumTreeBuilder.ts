@@ -3,23 +3,22 @@ import { PendingBranch } from './PendingBranch.js';
 import { PendingLeafBranch } from './PendingLeafBranch.js';
 import { PendingNodeBranch } from './PendingNodeBranch.js';
 import { RootNode } from './RootNode.js';
-import { calculateCommonPath } from './SparseMerkleTreePathUtils.js';
 import { IDataHasher } from '../hash/IDataHasher.js';
 import { IDataHasherFactory } from '../hash/IDataHasherFactory.js';
+import { calculateCommonPath } from '../smt/SparseMerkleTreePathUtils.js';
 
-export class SparseMerkleTreeBuilder {
+export class SparseMerkleSumTreeBuilder {
   private left: PendingBranch | null = null;
   private right: PendingBranch | null = null;
 
   public constructor(public readonly factory: IDataHasherFactory<IDataHasher>) {}
 
-  public addLeaf(path: bigint, valueRef: Uint8Array): void {
+  public addLeaf(path: bigint, value: Uint8Array, sum: bigint): void {
     const isRight = path & 1n;
-    const value = new Uint8Array(valueRef);
     if (isRight) {
-      this.right = this.right ? this.buildTree(this.right, path, value) : new PendingLeafBranch(path, value);
+      this.right = this.right ? this.buildTree(this.right, path, value, sum) : new PendingLeafBranch(path, value, sum);
     } else {
-      this.left = this.left ? this.buildTree(this.left, path, value) : new PendingLeafBranch(path, value);
+      this.left = this.left ? this.buildTree(this.left, path, value, sum) : new PendingLeafBranch(path, value, sum);
     }
   }
 
@@ -33,10 +32,10 @@ export class SparseMerkleTreeBuilder {
 
     this.left = left ?? null;
     this.right = right ?? null;
-    return new RootNode(left ?? null, right ?? null, hash);
+    return new RootNode(left ?? null, right ?? null, (left?.sum ?? 0n) + (right?.sum ?? 0n), hash);
   }
 
-  private buildTree(branch: PendingBranch, remainingPath: bigint, value: Uint8Array): PendingBranch {
+  private buildTree(branch: PendingBranch, remainingPath: bigint, value: Uint8Array, sum: bigint): PendingBranch {
     const commonPath = calculateCommonPath(remainingPath, branch.path);
     const isRight = (remainingPath >> commonPath.length) & 1n;
 
@@ -50,14 +49,14 @@ export class SparseMerkleTreeBuilder {
         throw new Error('Cannot extend tree through leaf.');
       }
 
-      const oldBranch = new PendingLeafBranch(branch.path >> commonPath.length, branch.value);
-      const newBranch = new PendingLeafBranch(remainingPath >> commonPath.length, value);
+      const oldBranch = new PendingLeafBranch(branch.path >> commonPath.length, branch.value, branch.sum);
+      const newBranch = new PendingLeafBranch(remainingPath >> commonPath.length, value, sum);
       return new PendingNodeBranch(commonPath.path, isRight ? oldBranch : newBranch, isRight ? newBranch : oldBranch);
     }
 
     // If node branch is split in the middle
     if (commonPath.path < branch.path) {
-      const newBranch = new PendingLeafBranch(remainingPath >> commonPath.length, value);
+      const newBranch = new PendingLeafBranch(remainingPath >> commonPath.length, value, sum);
       const oldBranch = new PendingNodeBranch(branch.path >> commonPath.length, branch.left, branch.right);
       return new PendingNodeBranch(commonPath.path, isRight ? oldBranch : newBranch, isRight ? newBranch : oldBranch);
     }
@@ -66,13 +65,13 @@ export class SparseMerkleTreeBuilder {
       return new PendingNodeBranch(
         branch.path,
         branch.left,
-        this.buildTree(branch.right, remainingPath >> commonPath.length, value),
+        this.buildTree(branch.right, remainingPath >> commonPath.length, value, sum),
       );
     }
 
     return new PendingNodeBranch(
       branch.path,
-      this.buildTree(branch.left, remainingPath >> commonPath.length, value),
+      this.buildTree(branch.left, remainingPath >> commonPath.length, value, sum),
       branch.right,
     );
   }
