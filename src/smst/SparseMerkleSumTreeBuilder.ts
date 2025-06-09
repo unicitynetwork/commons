@@ -3,7 +3,7 @@ import { PendingBranch } from './PendingBranch.js';
 import { PendingLeafBranch } from './PendingLeafBranch.js';
 import { PendingNodeBranch } from './PendingNodeBranch.js';
 import { RootNode } from './RootNode.js';
-import { CborEncoder } from '../cbor/CborEncoder';
+import { CborEncoder } from '../cbor/CborEncoder.js';
 import { IDataHasher } from '../hash/IDataHasher.js';
 import { IDataHasherFactory } from '../hash/IDataHasherFactory.js';
 import { calculateCommonPath } from '../smt/SparseMerkleTreePathUtils.js';
