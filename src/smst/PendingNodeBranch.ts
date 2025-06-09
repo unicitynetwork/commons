@@ -28,7 +28,6 @@ export class PendingNodeBranch {
           ]),
         ]),
       )
-      .update(right.hash.data)
       .digest();
     const hash = await factory.create().update(BigintConverter.encode(this.path)).update(childrenHash.imprint).digest();
     return new NodeBranch(this.path, left, right, left.sum + right.sum, childrenHash, hash);
