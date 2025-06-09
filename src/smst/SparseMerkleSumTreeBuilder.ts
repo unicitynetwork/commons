@@ -3,6 +3,7 @@ import { PendingBranch } from './PendingBranch.js';
 import { PendingLeafBranch } from './PendingLeafBranch.js';
 import { PendingNodeBranch } from './PendingNodeBranch.js';
 import { RootNode } from './RootNode.js';
+import { CborEncoder } from '../cbor/CborEncoder';
 import { IDataHasher } from '../hash/IDataHasher.js';
 import { IDataHasherFactory } from '../hash/IDataHasherFactory.js';
 import { calculateCommonPath } from '../smt/SparseMerkleTreePathUtils.js';
@@ -26,8 +27,22 @@ export class SparseMerkleSumTreeBuilder {
     const [left, right] = await Promise.all([this.left?.finalize(this.factory), this.right?.finalize(this.factory)]);
     const hash = await this.factory
       .create()
-      .update(left?.hash.data ?? new Uint8Array(1))
-      .update(right?.hash.data ?? new Uint8Array(1))
+      .update(
+        CborEncoder.encodeArray([
+          left
+            ? CborEncoder.encodeArray([
+                CborEncoder.encodeByteString(left.hash.imprint),
+                CborEncoder.encodeUnsignedInteger(left.sum),
+              ])
+            : CborEncoder.encodeNull(),
+          right
+            ? CborEncoder.encodeArray([
+                CborEncoder.encodeByteString(right.hash.imprint),
+                CborEncoder.encodeUnsignedInteger(right.sum),
+              ])
+            : CborEncoder.encodeNull(),
+        ]),
+      )
       .digest();
 
     this.left = left ?? null;
