@@ -208,7 +208,7 @@ export class SubmitCommitmentResponse {
       transactionHash,
     );
 
-    const signature = await signingService.sign(request.hash.imprint);
+    const signature = await signingService.sign(request.hash.data);
 
     this.receipt = {
       algorithm: signingService.algorithm,
@@ -229,7 +229,7 @@ export class SubmitCommitmentResponse {
     }
 
     return SigningService.verifyWithPublicKey(
-      this.receipt.request.hash.imprint,
+      this.receipt.request.hash.data,
       this.receipt.signature.bytes,
       HexConverter.decode(this.receipt.publicKey),
     );

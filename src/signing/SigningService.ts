@@ -73,7 +73,7 @@ export class SigningService implements ISigningService<Signature> {
   }
 
   /**
-   * @see {ISigningService.sign}
+   * @see {ISigningService.sign} 32-byte hash.
    */
   public sign(hash: Uint8Array): Promise<Signature> {
     const signature = secp256k1.sign(hash, this.privateKey);

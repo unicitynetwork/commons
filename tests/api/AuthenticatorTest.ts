@@ -46,4 +46,24 @@ describe('Authenticator', () => {
     const requestId = await RequestId.create(signingService.publicKey, DataHash.fromImprint(new Uint8Array(34)));
     expect(requestId.equals(await authenticator.calculateRequestId())).toBeTruthy();
   });
+
+  it('signed tx hash imprint must fail verification', async () => {
+    const requestId: RequestId = RequestId.fromJSON(
+      '0000cfe84a1828e2edd0a7d9533b23e519f746069a938d549a150e07e14dc0f9cf00',
+    );
+    const transactionHash: DataHash = DataHash.fromJSON(
+      '00008a51b5b84171e6c7c345bf3610cc18fa1b61bad33908e1522520c001b0e7fd1d',
+    );
+    const authenticator: Authenticator = new Authenticator(
+      'secp256k1',
+      HexConverter.decode('032044f2cd28867f57ace2b3fd1437b775df8dd62ea0acf0e1fc43cc846c1a05e1'),
+      Signature.fromJSON(
+        '416751e864ba85250091e4fcd1b728850e7d1ea757ad4f297a29b018182ff4dd1f25982aede58e56d9163cc6ab36b3433bfe34d1cec41bdb03d9e31b87619b1f00',
+      ),
+      DataHash.fromJSON('0000cd6065a0f1d503113f443505fd7981e6096e8f5b725501c00379e8eb74055648'),
+    );
+
+    expect(requestId.equals(await authenticator.calculateRequestId())).toBeTruthy();
+    expect(await authenticator.verify(transactionHash)).toBeFalsy();
+  });
 });

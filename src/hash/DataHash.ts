@@ -21,6 +21,11 @@ export class DataHash {
     return new Uint8Array(this._data);
   }
 
+  /**
+   * Returns the imprint of the hash, which includes the algorithm identifier and the data.
+   * The first two bytes represent the algorithm, followed by the data bytes.
+   * NB! Do not use this for signing, use `data` instead.
+   */
   public get imprint(): Uint8Array {
     return new Uint8Array(this._imprint);
   }

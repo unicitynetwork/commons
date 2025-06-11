@@ -1,36 +1,37 @@
 import { Authenticator } from '../../src/api/Authenticator.js';
 import { InclusionProof, InclusionProofVerificationStatus } from '../../src/api/InclusionProof.js';
+import { LeafValue } from '../../src/api/LeafValue.js';
 import { RequestId } from '../../src/api/RequestId.js';
 import { CborEncoder } from '../../src/cbor/CborEncoder.js';
 import { DataHash } from '../../src/hash/DataHash.js';
 import { HashAlgorithm } from '../../src/hash/HashAlgorithm.js';
-import { Signature } from '../../src/signing/Signature.js';
+import { SigningService } from '../../src/signing/SigningService.js';
 import { MerkleTreePath } from '../../src/smt/MerkleTreePath.js';
+import { SparseMerkleTree } from '../../src/smt/SparseMerkleTree.js';
 import { HexConverter } from '../../src/util/HexConverter.js';
 
 describe('InclusionProof', () => {
-  const publicKey = HexConverter.decode('0279BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798');
-  const transactionHash = DataHash.fromImprint(new Uint8Array(34));
-  const authenticator = new Authenticator(
-    'secp256k1',
-    publicKey,
-    Signature.decode(
-      HexConverter.decode(
-        'A0B37F8FBA683CC68F6574CD43B39F0343A50008BF6CCEA9D13231D9E7E2E1E411EDC8D307254296264AEBFC3DC76CD8B668373A072FD64665B50000E9FCCE5201',
-      ),
-    ),
-    DataHash.fromImprint(new Uint8Array(34)),
+  const signingService = new SigningService(
+    new Uint8Array(HexConverter.decode('0000000000000000000000000000000000000000000000000000000000000001')),
   );
+  const publicKey = signingService.publicKey;
+  const transactionHash = DataHash.fromImprint(new Uint8Array(34));
+  let authenticator: Authenticator;
+  let merkleTreePath: MerkleTreePath;
 
-  const merkleTreePath = MerkleTreePath.fromJSON({
-    root: '0000CEEA69FFE5399BAE643C9DC6E456B33F17488A5E1F6A497CC6692677C1DBC940',
-    steps: [
-      {
-        branch: ['0000635F7A05683E8BD119490DE02AE3CE67A44C73CED2A5F2DA33743269218AB8DF'],
-        path: '7588594300971394838541568248286222591294169947711183361137673310094707450920243806',
-        sibling: null,
-      },
-    ],
+  beforeAll(async () => {
+    authenticator = await Authenticator.create(
+      signingService,
+      transactionHash,
+      DataHash.fromImprint(new Uint8Array(34)),
+    );
+    const lf = await LeafValue.create(authenticator, transactionHash);
+    const smt = new SparseMerkleTree(HashAlgorithm.SHA256);
+    const reqID = (await RequestId.create(publicKey, authenticator.stateHash)).toBigInt();
+    smt.addLeaf(reqID, lf.bytes);
+
+    merkleTreePath = await smt.getPath(reqID);
+    console.log(merkleTreePath.toString());
   });
 
   it('should encode and decode json', () => {
@@ -122,7 +123,7 @@ describe('InclusionProof', () => {
       authenticator,
       new DataHash(
         HashAlgorithm.SHA224,
-        HexConverter.decode('0000000000000000000000000000000000000000000000000000000000000000'),
+        HexConverter.decode('FF000000000000000000000000000000000000000000000000000000000000FF'),
       ),
     );
 
