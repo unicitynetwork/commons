@@ -10,6 +10,7 @@ describe('Signing Service tests', function () {
     const signature = await signingService.sign(hash.data);
     expect(signature).not.toBeNull();
     expect(signature.encode().length).toEqual(65);
+    await expect(SigningService.verifySignatureWithRecoveredPublicKey(hash.data, signature)).resolves.toBeTruthy();
     const verificationResult = await signingService.verify(hash.data, signature);
     expect(verificationResult).toBeTruthy();
   });

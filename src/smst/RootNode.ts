@@ -2,8 +2,8 @@ import { Branch } from './Branch.js';
 import { LeafBranch } from './LeafBranch.js';
 import { MerkleTreePath } from './MerkleTreePath.js';
 import { MerkleTreePathStep } from './MerkleTreePathStep.js';
-import { calculateCommonPath } from './SparseMerkleTreePathUtils.js';
 import { DataHash } from '../hash/DataHash.js';
+import { calculateCommonPath } from '../smt/SparseMerkleTreePathUtils.js';
 import { dedent } from '../util/StringUtils.js';
 
 export class RootNode {
@@ -12,6 +12,7 @@ export class RootNode {
   public constructor(
     public readonly left: Branch | null,
     public readonly right: Branch | null,
+    public readonly sum: bigint,
     public readonly hash: DataHash,
   ) {}
 
@@ -50,7 +51,7 @@ export class RootNode {
   }
 
   public getPath(path: bigint): MerkleTreePath {
-    return new MerkleTreePath(this.hash, RootNode.generatePath(path, this.left, this.right));
+    return new MerkleTreePath(this.hash, this.sum, RootNode.generatePath(path, this.left, this.right));
   }
 
   public toString(): string {

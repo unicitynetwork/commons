@@ -7,9 +7,54 @@ import { BigintConverter } from '../util/BigintConverter.js';
 import { HexConverter } from '../util/HexConverter.js';
 import { dedent } from '../util/StringUtils.js';
 
-type MerkleTreePathStepBranchJson = [string?];
+type MerkleTreePathStepSiblingJson = [string, string];
+class MerkleTreePathStepSibling {
+  public constructor(
+    public readonly sum: bigint,
+    public readonly hash: DataHash,
+  ) {}
+
+  public static create(sibling: Branch): MerkleTreePathStepSibling {
+    return new MerkleTreePathStepSibling(sibling.sum, sibling.hash);
+  }
+
+  public static isJSON(data: unknown): data is MerkleTreePathStepSiblingJson {
+    return Array.isArray(data);
+  }
+
+  public static fromJSON(data: unknown): MerkleTreePathStepSibling {
+    if (!Array.isArray(data) || data.length !== 2) {
+      throw new Error('Parsing merkle tree path step branch failed.');
+    }
+
+    return new MerkleTreePathStepSibling(BigInt(data[0]), DataHash.fromJSON(data[1]));
+  }
+
+  public static fromCBOR(bytes: Uint8Array): MerkleTreePathStepSibling {
+    const data = CborDecoder.readArray(bytes);
+
+    return new MerkleTreePathStepSibling(CborDecoder.readUnsignedInteger(data[0]), DataHash.fromCBOR(data[1]));
+  }
+
+  public toCBOR(): Uint8Array {
+    return CborEncoder.encodeArray([CborEncoder.encodeUnsignedInteger(this.sum), this.hash.toCBOR()]);
+  }
+
+  public toJSON(): MerkleTreePathStepSiblingJson {
+    return [this.sum.toString(), this.hash.toJSON()];
+  }
+
+  public toString(): string {
+    return `MerkleTreePathStepSibling[${this.sum},${this.hash.toString()}]`;
+  }
+}
+
+type MerkleTreePathStepBranchJson = [string, string | null];
 class MerkleTreePathStepBranch {
-  public constructor(private readonly _value: Uint8Array | null) {
+  public constructor(
+    public readonly sum: bigint,
+    private readonly _value: Uint8Array | null,
+  ) {
     this._value = _value ? new Uint8Array(_value) : null;
   }
 
@@ -26,14 +71,18 @@ class MerkleTreePathStepBranch {
       throw new Error('Parsing merkle tree path step branch failed.');
     }
 
-    const value = data.at(0);
-    return new MerkleTreePathStepBranch(value ? HexConverter.decode(value) : null);
+    const sum = data.at(0);
+    const value = data.at(1);
+    return new MerkleTreePathStepBranch(sum ?? 0n, value ? HexConverter.decode(value) : null);
   }
 
   public static fromCBOR(bytes: Uint8Array): MerkleTreePathStepBranch {
     const data = CborDecoder.readArray(bytes);
 
-    return new MerkleTreePathStepBranch(CborDecoder.readOptional(data[0], CborDecoder.readByteString));
+    return new MerkleTreePathStepBranch(
+      CborDecoder.readUnsignedInteger(data[0]),
+      CborDecoder.readOptional(data[1], CborDecoder.readByteString),
+    );
   }
 
   public toCBOR(): Uint8Array {
@@ -41,7 +90,7 @@ class MerkleTreePathStepBranch {
   }
 
   public toJSON(): MerkleTreePathStepBranchJson {
-    return this._value ? [HexConverter.encode(this._value)] : [];
+    return [this.sum.toString(), this._value ? HexConverter.encode(this._value) : null];
   }
 
   public toString(): string {
@@ -51,31 +100,43 @@ class MerkleTreePathStepBranch {
 
 export interface IMerkleTreePathStepJson {
   readonly path: string;
-  readonly sibling: string | null;
+  readonly sibling: MerkleTreePathStepSiblingJson | null;
   readonly branch: MerkleTreePathStepBranchJson | null;
 }
 
 export class MerkleTreePathStep {
   private constructor(
     public readonly path: bigint,
-    public readonly sibling: DataHash | null,
+    public readonly sibling: MerkleTreePathStepSibling | null,
     public readonly branch: MerkleTreePathStepBranch | null,
   ) {}
 
   public static createWithoutBranch(path: bigint, sibling: Branch | null): MerkleTreePathStep {
-    return new MerkleTreePathStep(path, sibling?.hash ?? null, null);
+    return new MerkleTreePathStep(path, sibling ? MerkleTreePathStepSibling.create(sibling) : null, null);
   }
 
   public static create(path: bigint, value: Branch | null, sibling: Branch | null): MerkleTreePathStep {
     if (value == null) {
-      return new MerkleTreePathStep(path, sibling?.hash ?? null, new MerkleTreePathStepBranch(null));
+      return new MerkleTreePathStep(
+        path,
+        sibling ? MerkleTreePathStepSibling.create(sibling) : null,
+        new MerkleTreePathStepBranch(0n, null),
+      );
     }
 
     if (value instanceof LeafBranch) {
-      return new MerkleTreePathStep(path, sibling?.hash ?? null, new MerkleTreePathStepBranch(value.value));
+      return new MerkleTreePathStep(
+        path,
+        sibling ? MerkleTreePathStepSibling.create(sibling) : null,
+        new MerkleTreePathStepBranch(value.sum, value.value),
+      );
     }
 
-    return new MerkleTreePathStep(path, sibling?.hash ?? null, new MerkleTreePathStepBranch(value.childrenHash.data));
+    return new MerkleTreePathStep(
+      path,
+      sibling ? MerkleTreePathStepSibling.create(sibling) : null,
+      new MerkleTreePathStepBranch(value.sum, value.childrenHash.data),
+    );
   }
 
   public static isJSON(data: unknown): data is IMerkleTreePathStepJson {
@@ -96,7 +157,7 @@ export class MerkleTreePathStep {
 
     return new MerkleTreePathStep(
       BigInt(data.path),
-      data.sibling == null ? null : DataHash.fromJSON(data.sibling),
+      data.sibling != null ? MerkleTreePathStepSibling.fromJSON(data.sibling) : null,
       data.branch != null ? MerkleTreePathStepBranch.fromJSON(data.branch) : null,
     );
   }
@@ -106,7 +167,7 @@ export class MerkleTreePathStep {
 
     return new MerkleTreePathStep(
       BigintConverter.decode(CborDecoder.readByteString(data[0])),
-      CborDecoder.readOptional(data[1], DataHash.fromCBOR),
+      CborDecoder.readOptional(data[1], MerkleTreePathStepSibling.fromCBOR),
       CborDecoder.readOptional(data[2], MerkleTreePathStepBranch.fromCBOR),
     );
   }
