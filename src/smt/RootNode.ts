@@ -4,6 +4,7 @@ import { MerkleTreePath } from './MerkleTreePath.js';
 import { MerkleTreePathStep } from './MerkleTreePathStep.js';
 import { calculateCommonPath } from './SparseMerkleTreePathUtils.js';
 import { DataHash } from '../hash/DataHash.js';
+import { dedent } from '../util/StringUtils.js';
 
 export class RootNode {
   public readonly path = 1n;
@@ -50,5 +51,13 @@ export class RootNode {
 
   public getPath(path: bigint): MerkleTreePath {
     return new MerkleTreePath(this.hash, RootNode.generatePath(path, this.left, this.right));
+  }
+
+  public toString(): string {
+    return dedent`
+      Left: 
+        ${this.left ? this.left.toString() : 'null'}
+      Right: 
+        ${this.right ? this.right.toString() : 'null'}`;
   }
 }

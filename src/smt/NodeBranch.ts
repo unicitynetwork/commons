@@ -1,5 +1,6 @@
 import { Branch } from './Branch.js';
 import { DataHash } from '../hash/DataHash.js';
+import { dedent } from '../util/StringUtils.js';
 
 export class NodeBranch {
   public constructor(
@@ -12,5 +13,14 @@ export class NodeBranch {
 
   public finalize(): Promise<NodeBranch> {
     return Promise.resolve(this);
+  }
+
+  public toString(): string {
+    return dedent`
+      Node[${this.path.toString(2)}]
+        Children Hash: ${this.childrenHash.toString()}
+        Hash: ${this.hash.toString()}
+        Left: ${this.left.toString()}
+        Right: ${this.right.toString()}`;
   }
 }
