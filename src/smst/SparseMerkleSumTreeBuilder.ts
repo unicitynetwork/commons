@@ -12,9 +12,17 @@ export class SparseMerkleSumTreeBuilder {
   private left: PendingBranch | null = null;
   private right: PendingBranch | null = null;
 
-  public constructor(public readonly factory: IDataHasherFactory<IDataHasher>) {}
+  public constructor(private readonly factory: IDataHasherFactory<IDataHasher>) {}
 
   public addLeaf(path: bigint, value: Uint8Array, sum: bigint): void {
+    if (sum < 0n) {
+      throw new Error('Sum must be a unsigned integer.');
+    }
+
+    if (path < 1n) {
+      throw new Error('Path must be a unsigned integer.');
+    }
+
     const isRight = path & 1n;
     if (isRight) {
       this.right = this.right ? this.buildTree(this.right, path, value, sum) : new PendingLeafBranch(path, value, sum);

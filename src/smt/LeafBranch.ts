@@ -1,4 +1,5 @@
 import { DataHash } from '../hash/DataHash.js';
+import { HexConverter } from '../util/HexConverter.js';
 
 export class LeafBranch {
   public constructor(
@@ -13,5 +14,12 @@ export class LeafBranch {
 
   public finalize(): Promise<LeafBranch> {
     return Promise.resolve(this);
+  }
+
+  public toString(): string {
+    return `
+      Leaf[${this.path}]
+        Value: ${HexConverter.encode(this._value)}
+    `;
   }
 }

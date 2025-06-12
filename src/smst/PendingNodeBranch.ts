@@ -3,7 +3,6 @@ import { PendingBranch } from './PendingBranch.js';
 import { CborEncoder } from '../cbor/CborEncoder.js';
 import { IDataHasher } from '../hash/IDataHasher.js';
 import { IDataHasherFactory } from '../hash/IDataHasherFactory.js';
-import { BigintConverter } from '../util/BigintConverter.js';
 
 export class PendingNodeBranch {
   public constructor(
@@ -29,7 +28,17 @@ export class PendingNodeBranch {
         ]),
       )
       .digest();
-    const hash = await factory.create().update(BigintConverter.encode(this.path)).update(childrenHash.imprint).digest();
+
+    const hash = await factory
+      .create()
+      .update(
+        CborEncoder.encodeArray([
+          CborEncoder.encodeUnsignedInteger(this.path),
+          CborEncoder.encodeByteString(childrenHash.imprint),
+          CborEncoder.encodeUnsignedInteger(left.sum + right.sum),
+        ]),
+      )
+      .digest();
     return new NodeBranch(this.path, left, right, left.sum + right.sum, childrenHash, hash);
   }
 }
