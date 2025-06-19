@@ -1,4 +1,5 @@
 import { IMerkleTreePathStepJson, MerkleTreePathStep } from './MerkleTreePathStep.js';
+import { PathVerificationResult } from './PathVerificationResult.js';
 import { CborDecoder } from '../cbor/CborDecoder.js';
 import { CborEncoder } from '../cbor/CborEncoder.js';
 import { DataHash } from '../hash/DataHash.js';
@@ -10,17 +11,6 @@ import { dedent } from '../util/StringUtils.js';
 export interface IMerkleTreePathJson {
   readonly root: string;
   readonly steps: ReadonlyArray<IMerkleTreePathStepJson>;
-}
-
-export class MerkleTreePathVerificationResult {
-  public readonly result: boolean;
-
-  public constructor(
-    public readonly isPathValid: boolean,
-    public readonly isPathIncluded: boolean,
-  ) {
-    this.result = isPathValid && isPathIncluded;
-  }
 }
 
 export class MerkleTreePath {
@@ -75,7 +65,7 @@ export class MerkleTreePath {
     };
   }
 
-  public async verify(requestId: bigint): Promise<MerkleTreePathVerificationResult> {
+  public async verify(requestId: bigint): Promise<PathVerificationResult> {
     let currentPath = 1n;
     let currentHash: DataHash | null = null;
 
@@ -104,10 +94,7 @@ export class MerkleTreePath {
         .digest();
     }
 
-    return new MerkleTreePathVerificationResult(
-      !!currentHash && this.root.equals(currentHash),
-      requestId === currentPath,
-    );
+    return new PathVerificationResult(!!currentHash && this.root.equals(currentHash), requestId === currentPath);
   }
 
   public toString(): string {

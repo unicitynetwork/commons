@@ -1,14 +1,22 @@
 import { DataHash } from '../../src/hash/DataHash.js';
+import { DataHasherFactory } from '../../src/hash/DataHasherFactory.js';
 import { HashAlgorithm } from '../../src/hash/HashAlgorithm.js';
-import { LeafBranch } from '../../src/smt/LeafBranch.js';
+import { NodeDataHasher } from '../../src/hash/NodeDataHasher.js';
 import { MerkleTreePath } from '../../src/smt/MerkleTreePath.js';
 import { MerkleTreePathStep } from '../../src/smt/MerkleTreePathStep.js';
+import { PendingLeafBranch } from '../../src/smt/PendingLeafBranch.js';
 import { HexConverter } from '../../src/util/HexConverter.js';
 
 describe('SparseMerkleTreePath', () => {
   it('should encode and decode to exactly same object', async () => {
     const path = new MerkleTreePath(DataHash.fromImprint(new Uint8Array(34)), [
-      await MerkleTreePathStep.create(0n, new LeafBranch(HashAlgorithm.SHA256, 0n, new Uint8Array(10)), null),
+      MerkleTreePathStep.create(
+        0n,
+        await new PendingLeafBranch(0n, new Uint8Array(10)).finalize(
+          new DataHasherFactory(HashAlgorithm.SHA256, NodeDataHasher),
+        ),
+        null,
+      ),
     ]);
 
     expect(HexConverter.encode(path.toCBOR())).toStrictEqual(

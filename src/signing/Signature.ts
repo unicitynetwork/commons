@@ -8,7 +8,7 @@ export class Signature implements ISignature {
 
   public constructor(
     private readonly _bytes: Uint8Array,
-    private readonly recovery: number,
+    public readonly recovery: number,
   ) {
     this._bytes = new Uint8Array(_bytes);
   }

@@ -62,23 +62,20 @@ export class MerkleTreePathStep {
     public readonly branch: MerkleTreePathStepBranch | null,
   ) {}
 
-  public static async createWithoutBranch(path: bigint, sibling: Branch | null): Promise<MerkleTreePathStep> {
-    return new MerkleTreePathStep(path, (await sibling?.calculateHash()) ?? null, null);
+  public static createWithoutBranch(path: bigint, sibling: Branch | null): MerkleTreePathStep {
+    return new MerkleTreePathStep(path, sibling?.hash ?? null, null);
   }
 
-  public static async create(path: bigint, value: Branch | null, sibling: Branch | null): Promise<MerkleTreePathStep> {
-    const siblingHash = await sibling?.calculateHash();
-
+  public static create(path: bigint, value: Branch | null, sibling: Branch | null): MerkleTreePathStep {
     if (value == null) {
-      return new MerkleTreePathStep(path, siblingHash ?? null, new MerkleTreePathStepBranch(null));
+      return new MerkleTreePathStep(path, sibling?.hash ?? null, new MerkleTreePathStepBranch(null));
     }
 
     if (value instanceof LeafBranch) {
-      return new MerkleTreePathStep(path, siblingHash ?? null, new MerkleTreePathStepBranch(value.value));
+      return new MerkleTreePathStep(path, sibling?.hash ?? null, new MerkleTreePathStepBranch(value.value));
     }
 
-    const hash = await value.calculateChildrenHash();
-    return new MerkleTreePathStep(path, siblingHash ?? null, new MerkleTreePathStepBranch(hash.data));
+    return new MerkleTreePathStep(path, sibling?.hash ?? null, new MerkleTreePathStepBranch(value.childrenHash.data));
   }
 
   public static isJSON(data: unknown): data is IMerkleTreePathStepJson {

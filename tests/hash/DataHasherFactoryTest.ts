@@ -5,7 +5,7 @@ import { NodeDataHasher } from '../../src/hash/NodeDataHasher.js';
 
 describe('Data hasher factory', () => {
   it('should create hasher', () => {
-    expect(new DataHasherFactory(DataHasher).create(HashAlgorithm.SHA256)).toBeInstanceOf(DataHasher);
-    expect(new DataHasherFactory(NodeDataHasher).create(HashAlgorithm.SHA256)).toBeInstanceOf(NodeDataHasher);
+    expect(new DataHasherFactory(HashAlgorithm.SHA256, DataHasher).create()).toBeInstanceOf(DataHasher);
+    expect(new DataHasherFactory(HashAlgorithm.SHA256, NodeDataHasher).create()).toBeInstanceOf(NodeDataHasher);
   });
 });
