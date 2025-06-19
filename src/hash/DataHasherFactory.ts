@@ -4,7 +4,7 @@ import { IDataHasherFactory } from './IDataHasherFactory.js';
 
 export class DataHasherFactory<T extends IDataHasher> implements IDataHasherFactory<T> {
   public constructor(
-    private readonly algorithm: HashAlgorithm,
+    public readonly algorithm: HashAlgorithm,
     private readonly _hasherConstructor: new (algorithm: HashAlgorithm) => T,
   ) {}
 

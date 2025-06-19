@@ -2,6 +2,7 @@ import { LeafBranch } from './LeafBranch.js';
 import { CborEncoder } from '../cbor/CborEncoder.js';
 import { IDataHasher } from '../hash/IDataHasher.js';
 import { IDataHasherFactory } from '../hash/IDataHasherFactory.js';
+import { BigintConverter } from '../util/BigintConverter.js';
 
 export class PendingLeafBranch {
   public constructor(
@@ -19,9 +20,9 @@ export class PendingLeafBranch {
       .create()
       .update(
         CborEncoder.encodeArray([
-          CborEncoder.encodeUnsignedInteger(this.path),
+          CborEncoder.encodeByteString(BigintConverter.encode(this.path)),
           CborEncoder.encodeByteString(this.value),
-          CborEncoder.encodeUnsignedInteger(this.sum),
+          CborEncoder.encodeByteString(BigintConverter.encode(this.sum)),
         ]),
       )
       .digest();

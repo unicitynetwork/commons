@@ -1,12 +1,13 @@
 import { LeafBranch } from './LeafBranch.js';
+import { MerkleSumTreeRootNode } from './MerkleSumTreeRootNode.js';
 import { PendingBranch } from './PendingBranch.js';
 import { PendingLeafBranch } from './PendingLeafBranch.js';
 import { PendingNodeBranch } from './PendingNodeBranch.js';
-import { RootNode } from './RootNode.js';
 import { CborEncoder } from '../cbor/CborEncoder.js';
 import { IDataHasher } from '../hash/IDataHasher.js';
 import { IDataHasherFactory } from '../hash/IDataHasherFactory.js';
 import { calculateCommonPath } from '../smt/SparseMerkleTreePathUtils.js';
+import { BigintConverter } from '../util/BigintConverter.js';
 
 export class SparseMerkleSumTreeBuilder {
   private left: PendingBranch | null = null;
@@ -31,7 +32,7 @@ export class SparseMerkleSumTreeBuilder {
     }
   }
 
-  public async calculateRoot(): Promise<RootNode> {
+  public async calculateRoot(): Promise<MerkleSumTreeRootNode> {
     const [left, right] = await Promise.all([this.left?.finalize(this.factory), this.right?.finalize(this.factory)]);
     const hash = await this.factory
       .create()
@@ -40,13 +41,13 @@ export class SparseMerkleSumTreeBuilder {
           left
             ? CborEncoder.encodeArray([
                 CborEncoder.encodeByteString(left.hash.imprint),
-                CborEncoder.encodeUnsignedInteger(left.sum),
+                CborEncoder.encodeByteString(BigintConverter.encode(left.sum)),
               ])
             : CborEncoder.encodeNull(),
           right
             ? CborEncoder.encodeArray([
                 CborEncoder.encodeByteString(right.hash.imprint),
-                CborEncoder.encodeUnsignedInteger(right.sum),
+                CborEncoder.encodeByteString(BigintConverter.encode(right.sum)),
               ])
             : CborEncoder.encodeNull(),
         ]),
@@ -55,7 +56,7 @@ export class SparseMerkleSumTreeBuilder {
 
     this.left = left ?? null;
     this.right = right ?? null;
-    return new RootNode(left ?? null, right ?? null, (left?.sum ?? 0n) + (right?.sum ?? 0n), hash);
+    return new MerkleSumTreeRootNode(left ?? null, right ?? null, (left?.sum ?? 0n) + (right?.sum ?? 0n), hash);
   }
 
   private buildTree(branch: PendingBranch, remainingPath: bigint, value: Uint8Array, sum: bigint): PendingBranch {

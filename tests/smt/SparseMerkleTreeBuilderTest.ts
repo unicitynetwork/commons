@@ -4,14 +4,14 @@ import { HashAlgorithm } from '../../src/hash/HashAlgorithm.js';
 import { NodeDataHasher } from '../../src/hash/NodeDataHasher.js';
 import { Branch } from '../../src/smt/Branch.js';
 import { LeafBranch } from '../../src/smt/LeafBranch.js';
+import { MerkleTreeRootNode } from '../../src/smt/MerkleTreeRootNode.js';
 import { NodeBranch } from '../../src/smt/NodeBranch.js';
-import { RootNode } from '../../src/smt/RootNode.js';
 import { SparseMerkleTreeBuilder } from '../../src/smt/SparseMerkleTreeBuilder.js';
 import { HexConverter } from '../../src/util/HexConverter.js';
 
 type TreeResult = { path: bigint; hash: string; value?: string; left?: TreeResult; right?: TreeResult };
 
-function validateTree(branch: Branch | RootNode | null, result?: TreeResult): void {
+function validateTree(branch: Branch | MerkleTreeRootNode | null, result?: TreeResult): void {
   if (!result) {
     return expect(branch).toBeNull();
   }
@@ -23,7 +23,7 @@ function validateTree(branch: Branch | RootNode | null, result?: TreeResult): vo
     const leaf = branch as LeafBranch;
     expect(leaf.value).toStrictEqual(HexConverter.decode(result.value));
   } else {
-    const node = branch as NodeBranch | RootNode;
+    const node = branch as NodeBranch | MerkleTreeRootNode;
     validateTree(node.left, result.left);
     validateTree(node.right, result.right);
   }

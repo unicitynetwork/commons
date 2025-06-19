@@ -1,8 +1,8 @@
 import { LeafBranch } from './LeafBranch.js';
+import { MerkleTreeRootNode } from './MerkleTreeRootNode.js';
 import { PendingBranch } from './PendingBranch.js';
 import { PendingLeafBranch } from './PendingLeafBranch.js';
 import { PendingNodeBranch } from './PendingNodeBranch.js';
-import { RootNode } from './RootNode.js';
 import { calculateCommonPath } from './SparseMerkleTreePathUtils.js';
 import { IDataHasher } from '../hash/IDataHasher.js';
 import { IDataHasherFactory } from '../hash/IDataHasherFactory.js';
@@ -23,7 +23,7 @@ export class SparseMerkleTreeBuilder {
     }
   }
 
-  public async calculateRoot(): Promise<RootNode> {
+  public async calculateRoot(): Promise<MerkleTreeRootNode> {
     const [left, right] = await Promise.all([this.left?.finalize(this.factory), this.right?.finalize(this.factory)]);
     const hash = await this.factory
       .create()
@@ -33,7 +33,7 @@ export class SparseMerkleTreeBuilder {
 
     this.left = left ?? null;
     this.right = right ?? null;
-    return new RootNode(left ?? null, right ?? null, hash);
+    return new MerkleTreeRootNode(left ?? null, right ?? null, hash);
   }
 
   private buildTree(branch: PendingBranch, remainingPath: bigint, value: Uint8Array): PendingBranch {

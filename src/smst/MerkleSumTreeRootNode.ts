@@ -1,17 +1,18 @@
 import { Branch } from './Branch.js';
 import { LeafBranch } from './LeafBranch.js';
-import { MerkleTreePath } from './MerkleTreePath.js';
-import { MerkleTreePathStep } from './MerkleTreePathStep.js';
-import { calculateCommonPath } from './SparseMerkleTreePathUtils.js';
+import { MerkleSumTreePath } from './MerkleSumTreePath.js';
+import { MerkleSumTreePathStep } from './MerkleSumTreePathStep.js';
 import { DataHash } from '../hash/DataHash.js';
+import { calculateCommonPath } from '../smt/SparseMerkleTreePathUtils.js';
 import { dedent } from '../util/StringUtils.js';
 
-export class RootNode {
+export class MerkleSumTreeRootNode {
   public readonly path = 1n;
 
   public constructor(
     public readonly left: Branch | null,
     public readonly right: Branch | null,
+    public readonly sum: bigint,
     public readonly hash: DataHash,
   ) {}
 
@@ -19,38 +20,38 @@ export class RootNode {
     remainingPath: bigint,
     left: Branch | null,
     right: Branch | null,
-  ): ReadonlyArray<MerkleTreePathStep> {
+  ): ReadonlyArray<MerkleSumTreePathStep> {
     const isRight = remainingPath & 1n;
     const branch = isRight ? right : left;
     const siblingBranch = isRight ? left : right;
 
     if (branch === null) {
-      return [MerkleTreePathStep.createWithoutBranch(remainingPath, siblingBranch)];
+      return [MerkleSumTreePathStep.createWithoutBranch(remainingPath, siblingBranch)];
     }
 
     const commonPath = calculateCommonPath(remainingPath, branch.path);
 
     if (branch.path === commonPath.path) {
       if (branch instanceof LeafBranch) {
-        return [MerkleTreePathStep.create(branch.path, branch, siblingBranch)];
+        return [MerkleSumTreePathStep.create(branch.path, branch, siblingBranch)];
       }
 
       // If path has ended, return the current non leaf branch data
       if (remainingPath >> commonPath.length === 1n) {
-        return [MerkleTreePathStep.create(branch.path, branch, siblingBranch)];
+        return [MerkleSumTreePathStep.create(branch.path, branch, siblingBranch)];
       }
 
       return [
         ...this.generatePath(remainingPath >> commonPath.length, branch.left, branch.right),
-        MerkleTreePathStep.create(branch.path, null, siblingBranch),
+        MerkleSumTreePathStep.create(branch.path, null, siblingBranch),
       ];
     }
 
-    return [MerkleTreePathStep.create(branch.path, branch, siblingBranch)];
+    return [MerkleSumTreePathStep.create(branch.path, branch, siblingBranch)];
   }
 
-  public getPath(path: bigint): MerkleTreePath {
-    return new MerkleTreePath(this.hash, RootNode.generatePath(path, this.left, this.right));
+  public getPath(path: bigint): MerkleSumTreePath {
+    return new MerkleSumTreePath(this.hash, this.sum, MerkleSumTreeRootNode.generatePath(path, this.left, this.right));
   }
 
   public toString(): string {

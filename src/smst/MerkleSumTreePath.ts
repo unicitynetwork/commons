@@ -1,48 +1,39 @@
-import { IMerkleTreePathStepJson, MerkleTreePathStep } from './MerkleTreePathStep.js';
+import { IMerkleSumTreePathStepJson, MerkleSumTreePathStep } from './MerkleSumTreePathStep.js';
 import { CborDecoder } from '../cbor/CborDecoder.js';
 import { CborEncoder } from '../cbor/CborEncoder.js';
 import { DataHash } from '../hash/DataHash.js';
 import { DataHasher } from '../hash/DataHasher.js';
 import { HashAlgorithm } from '../hash/HashAlgorithm.js';
+import { PathVerificationResult } from '../smt/PathVerificationResult.js';
+import { BigintConverter } from '../util/BigintConverter.js';
 import { dedent } from '../util/StringUtils.js';
 
-export interface IMerkleTreePathJson {
+export interface IMerkleSumTreePathJson {
   readonly root: string;
   readonly sum: string;
-  readonly steps: ReadonlyArray<IMerkleTreePathStepJson>;
+  readonly steps: ReadonlyArray<IMerkleSumTreePathStepJson>;
 }
 
-export class MerkleTreePathVerificationResult {
-  public readonly result: boolean;
-
-  public constructor(
-    public readonly isPathValid: boolean,
-    public readonly isPathIncluded: boolean,
-  ) {
-    this.result = isPathValid && isPathIncluded;
-  }
-}
-
-export class MerkleTreePath {
+export class MerkleSumTreePath {
   public constructor(
     public readonly root: DataHash,
     public readonly sum: bigint,
-    public readonly steps: ReadonlyArray<MerkleTreePathStep>,
+    public readonly steps: ReadonlyArray<MerkleSumTreePathStep>,
   ) {}
 
-  public static fromJSON(data: unknown): MerkleTreePath {
-    if (!MerkleTreePath.isJSON(data)) {
+  public static fromJSON(data: unknown): MerkleSumTreePath {
+    if (!MerkleSumTreePath.isJSON(data)) {
       throw new Error('Parsing merkle tree path json failed.');
     }
 
-    return new MerkleTreePath(
+    return new MerkleSumTreePath(
       DataHash.fromJSON(data.root),
       BigInt(data.sum),
-      data.steps.map((step: unknown) => MerkleTreePathStep.fromJSON(step)),
+      data.steps.map((step: unknown) => MerkleSumTreePathStep.fromJSON(step)),
     );
   }
 
-  public static isJSON(data: unknown): data is IMerkleTreePathJson {
+  public static isJSON(data: unknown): data is IMerkleSumTreePathJson {
     return (
       typeof data === 'object' &&
       data !== null &&
@@ -53,24 +44,24 @@ export class MerkleTreePath {
     );
   }
 
-  public static fromCBOR(bytes: Uint8Array): MerkleTreePath {
+  public static fromCBOR(bytes: Uint8Array): MerkleSumTreePath {
     const data = CborDecoder.readArray(bytes);
 
-    return new MerkleTreePath(
+    return new MerkleSumTreePath(
       DataHash.fromCBOR(data[0]),
-      CborDecoder.readUnsignedInteger(data[1]),
-      CborDecoder.readArray(data[2]).map((step) => MerkleTreePathStep.fromCBOR(step)),
+      BigintConverter.decode(CborDecoder.readByteString(data[1])),
+      CborDecoder.readArray(data[2]).map((step) => MerkleSumTreePathStep.fromCBOR(step)),
     );
   }
 
   public toCBOR(): Uint8Array {
     return CborEncoder.encodeArray([
       this.root.toCBOR(),
-      CborEncoder.encodeArray(this.steps.map((step: MerkleTreePathStep) => step.toCBOR())),
+      CborEncoder.encodeArray(this.steps.map((step: MerkleSumTreePathStep) => step.toCBOR())),
     ]);
   }
 
-  public toJSON(): IMerkleTreePathJson {
+  public toJSON(): IMerkleSumTreePathJson {
     return {
       root: this.root.toJSON(),
       steps: this.steps.map((step) => step.toJSON()),
@@ -78,7 +69,7 @@ export class MerkleTreePath {
     };
   }
 
-  public async verify(requestId: bigint): Promise<MerkleTreePathVerificationResult> {
+  public async verify(requestId: bigint): Promise<PathVerificationResult> {
     let currentPath = 1n;
     let currentHash: DataHash | null = null;
     let currentSum = this.steps.at(0)?.branch?.sum ?? 0n;
@@ -91,9 +82,9 @@ export class MerkleTreePath {
         hash = await new DataHasher(HashAlgorithm.SHA256)
           .update(
             CborEncoder.encodeArray([
-              CborEncoder.encodeUnsignedInteger(step.path),
+              CborEncoder.encodeByteString(BigintConverter.encode(step.path)),
               bytes ? CborEncoder.encodeByteString(bytes) : CborEncoder.encodeNull(),
-              CborEncoder.encodeUnsignedInteger(currentSum),
+              CborEncoder.encodeByteString(BigintConverter.encode(currentSum)),
             ]),
           )
           .digest();
@@ -124,13 +115,13 @@ export class MerkleTreePath {
             left
               ? CborEncoder.encodeArray([
                   CborEncoder.encodeByteString(left[0].imprint),
-                  CborEncoder.encodeUnsignedInteger(left[1]),
+                  CborEncoder.encodeByteString(BigintConverter.encode(left[1])),
                 ])
               : CborEncoder.encodeNull(),
             right
               ? CborEncoder.encodeArray([
                   right[0] ? CborEncoder.encodeByteString(right[0].imprint) : CborEncoder.encodeNull(),
-                  CborEncoder.encodeUnsignedInteger(right[1]),
+                  CborEncoder.encodeByteString(BigintConverter.encode(right[1])),
                 ])
               : CborEncoder.encodeNull(),
           ]),
@@ -139,7 +130,7 @@ export class MerkleTreePath {
       currentSum += step.sibling?.sum ?? 0n;
     }
 
-    return new MerkleTreePathVerificationResult(
+    return new PathVerificationResult(
       !!currentHash && this.root.equals(currentHash) && currentSum === this.sum,
       requestId === currentPath,
     );
@@ -150,7 +141,7 @@ export class MerkleTreePath {
       Merkle Tree Path
         Root: ${this.root.toString()} 
         Steps: [
-          ${this.steps.map((step: MerkleTreePathStep | null) => step?.toString() ?? 'null').join('\n')}
+          ${this.steps.map((step: MerkleSumTreePathStep | null) => step?.toString() ?? 'null').join('\n')}
         ]`;
   }
 }

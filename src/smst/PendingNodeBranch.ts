@@ -3,6 +3,7 @@ import { PendingBranch } from './PendingBranch.js';
 import { CborEncoder } from '../cbor/CborEncoder.js';
 import { IDataHasher } from '../hash/IDataHasher.js';
 import { IDataHasherFactory } from '../hash/IDataHasherFactory.js';
+import { BigintConverter } from '../util/BigintConverter.js';
 
 export class PendingNodeBranch {
   public constructor(
@@ -19,11 +20,11 @@ export class PendingNodeBranch {
         CborEncoder.encodeArray([
           CborEncoder.encodeArray([
             CborEncoder.encodeByteString(left.hash.imprint),
-            CborEncoder.encodeUnsignedInteger(left.sum),
+            CborEncoder.encodeByteString(BigintConverter.encode(left.sum)),
           ]),
           CborEncoder.encodeArray([
             CborEncoder.encodeByteString(right.hash.imprint),
-            CborEncoder.encodeUnsignedInteger(right.sum),
+            CborEncoder.encodeByteString(BigintConverter.encode(right.sum)),
           ]),
         ]),
       )
@@ -33,9 +34,9 @@ export class PendingNodeBranch {
       .create()
       .update(
         CborEncoder.encodeArray([
-          CborEncoder.encodeUnsignedInteger(this.path),
+          CborEncoder.encodeByteString(BigintConverter.encode(this.path)),
           CborEncoder.encodeByteString(childrenHash.imprint),
-          CborEncoder.encodeUnsignedInteger(left.sum + right.sum),
+          CborEncoder.encodeByteString(BigintConverter.encode(left.sum + right.sum)),
         ]),
       )
       .digest();
