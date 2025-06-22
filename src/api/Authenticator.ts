@@ -36,7 +36,7 @@ export class Authenticator {
     return new Authenticator(
       signingService.algorithm,
       signingService.publicKey,
-      await signingService.sign(transactionHash.imprint),
+      await signingService.sign(transactionHash.data),
       stateHash,
     );
   }
@@ -98,7 +98,7 @@ export class Authenticator {
   }
 
   public verify(transactionHash: DataHash): Promise<boolean> {
-    return SigningService.verifyWithPublicKey(transactionHash.imprint, this.signature.bytes, this.publicKey);
+    return SigningService.verifyWithPublicKey(transactionHash.data, this.signature.bytes, this.publicKey);
   }
 
   public calculateRequestId(): Promise<RequestId> {
