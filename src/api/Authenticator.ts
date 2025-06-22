@@ -7,14 +7,31 @@ import { SigningService } from '../signing/SigningService.js';
 import { HexConverter } from '../util/HexConverter.js';
 import { dedent } from '../util/StringUtils.js';
 
+/**
+ * Interface representing the JSON structure of an Authenticator.
+ */
 export interface IAuthenticatorJson {
+  /** The public key as a hex string. */
   publicKey: string;
+  /** The signature algorithm used. */
   algorithm: string;
+  /** The signature as a hex string. */
   signature: string;
+  /** The state hash as a hex string. */
   stateHash: string;
 }
 
+/**
+ * Represents an Authenticator for signing and verifying transactions.
+ */
 export class Authenticator {
+  /**
+   * Constructs an Authenticator instance.
+   * @param algorithm The signature algorithm used.
+   * @param _publicKey The public key as a Uint8Array.
+   * @param signature The signature object.
+   * @param stateHash The state hash object.
+   */
   public constructor(
     public readonly algorithm: string,
     private readonly _publicKey: Uint8Array,
@@ -24,10 +41,21 @@ export class Authenticator {
     this._publicKey = new Uint8Array(_publicKey);
   }
 
+  /**
+   * Gets a copy of the public key.
+   * @returns The public key as a Uint8Array.
+   */
   public get publicKey(): Uint8Array {
     return new Uint8Array(this._publicKey);
   }
 
+  /**
+   * Creates an Authenticator by signing a transaction hash.
+   * @param signingService The signing service to use.
+   * @param transactionHash The transaction hash to sign.
+   * @param stateHash The state hash.
+   * @returns A Promise resolving to an Authenticator instance.
+   */
   public static async create(
     signingService: SigningService,
     transactionHash: DataHash,
@@ -41,6 +69,12 @@ export class Authenticator {
     );
   }
 
+  /**
+   * Creates an Authenticator from a JSON object.
+   * @param data The JSON data.
+   * @returns An Authenticator instance.
+   * @throws Error if parsing fails.
+   */
   public static fromJSON(data: unknown): Authenticator {
     if (!Authenticator.isJSON(data)) {
       throw new Error('Parsing authenticator dto failed.');
@@ -54,6 +88,11 @@ export class Authenticator {
     );
   }
 
+  /**
+   * Type guard to check if data is IAuthenticatorJson.
+   * @param data The data to check.
+   * @returns True if data is IAuthenticatorJson, false otherwise.
+   */
   public static isJSON(data: unknown): data is IAuthenticatorJson {
     return (
       typeof data === 'object' &&
@@ -69,6 +108,11 @@ export class Authenticator {
     );
   }
 
+  /**
+   * Decodes an Authenticator from CBOR bytes.
+   * @param bytes The CBOR-encoded bytes.
+   * @returns An Authenticator instance.
+   */
   public static fromCBOR(bytes: Uint8Array): Authenticator {
     const data = CborDecoder.readArray(bytes);
     return new Authenticator(
@@ -79,6 +123,10 @@ export class Authenticator {
     );
   }
 
+  /**
+   * Encodes the Authenticator to CBOR format.
+   * @returns The CBOR-encoded bytes.
+   */
   public toCBOR(): Uint8Array {
     return CborEncoder.encodeArray([
       CborEncoder.encodeTextString(this.algorithm),
@@ -88,6 +136,10 @@ export class Authenticator {
     ]);
   }
 
+  /**
+   * Converts the Authenticator to a JSON object.
+   * @returns The Authenticator as IAuthenticatorJson.
+   */
   public toJSON(): IAuthenticatorJson {
     return {
       algorithm: this.algorithm,
@@ -97,14 +149,27 @@ export class Authenticator {
     };
   }
 
+  /**
+   * Verifies the signature for a given transaction hash.
+   * @param transactionHash The transaction hash to verify.
+   * @returns A Promise resolving to true if valid, false otherwise.
+   */
   public verify(transactionHash: DataHash): Promise<boolean> {
     return SigningService.verifyWithPublicKey(transactionHash.data, this.signature.bytes, this.publicKey);
   }
 
+  /**
+   * Calculates the request ID for this Authenticator.
+   * @returns A Promise resolving to a RequestId.
+   */
   public calculateRequestId(): Promise<RequestId> {
     return RequestId.create(this._publicKey, this.stateHash);
   }
 
+  /**
+   * Returns a string representation of the Authenticator.
+   * @returns The string representation.
+   */
   public toString(): string {
     return dedent`
       Authenticator
