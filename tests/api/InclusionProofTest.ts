@@ -4,10 +4,12 @@ import { LeafValue } from '../../src/api/LeafValue.js';
 import { RequestId } from '../../src/api/RequestId.js';
 import { CborEncoder } from '../../src/cbor/CborEncoder.js';
 import { DataHash } from '../../src/hash/DataHash.js';
+import { DataHasherFactory } from '../../src/hash/DataHasherFactory.js';
 import { HashAlgorithm } from '../../src/hash/HashAlgorithm.js';
+import { NodeDataHasher } from '../../src/hash/NodeDataHasher.js';
 import { SigningService } from '../../src/signing/SigningService.js';
 import { MerkleTreePath } from '../../src/smt/MerkleTreePath.js';
-import { SparseMerkleTree } from '../../src/smt/SparseMerkleTree.js';
+import { SparseMerkleTreeBuilder } from '../../src/smt/SparseMerkleTreeBuilder.js';
 import { HexConverter } from '../../src/util/HexConverter.js';
 
 describe('InclusionProof', () => {
@@ -26,11 +28,13 @@ describe('InclusionProof', () => {
       DataHash.fromImprint(new Uint8Array(34)),
     );
     const lf = await LeafValue.create(authenticator, transactionHash);
-    const smt = new SparseMerkleTree(HashAlgorithm.SHA256);
+    const smt = new SparseMerkleTreeBuilder(new DataHasherFactory(HashAlgorithm.SHA256, NodeDataHasher));
     const reqID = (await RequestId.create(publicKey, authenticator.stateHash)).toBigInt();
     smt.addLeaf(reqID, lf.bytes);
 
-    merkleTreePath = await smt.getPath(reqID);
+    const root = await smt.calculateRoot();
+
+    merkleTreePath = root.getPath(reqID);
     console.log(merkleTreePath.toString());
   });
 
