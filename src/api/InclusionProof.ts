@@ -6,12 +6,21 @@ import { DataHash } from '../hash/DataHash.js';
 import { IMerkleTreePathJson, MerkleTreePath } from '../smt/MerkleTreePath.js';
 import { dedent } from '../util/StringUtils.js';
 
+/**
+ * Interface representing the JSON structure of an InclusionProof.
+ */
 export interface IInclusionProofJson {
+  /** The sparse merkle tree path as JSON. */
   readonly merkleTreePath: IMerkleTreePathJson;
+  /** The authenticator as JSON or null. */
   readonly authenticator: IAuthenticatorJson | null;
+  /** The transaction hash as a string or null. */
   readonly transactionHash: string | null;
 }
 
+/**
+ * Status codes for verifying an InclusionProof.
+ */
 export enum InclusionProofVerificationStatus {
   NOT_AUTHENTICATED = 'NOT_AUTHENTICATED',
   PATH_NOT_INCLUDED = 'PATH_NOT_INCLUDED',
@@ -19,7 +28,17 @@ export enum InclusionProofVerificationStatus {
   OK = 'OK',
 }
 
+/**
+ * Represents a proof of inclusion or non inclusion in a sparse merkle tree.
+ */
 export class InclusionProof {
+  /**
+   * Constructs an InclusionProof instance.
+   * @param merkleTreePath Sparse merkle tree path.
+   * @param authenticator Authenticator.
+   * @param transactionHash Transaction hash.
+   * @throws Error if authenticator and transactionHash are not both set or both null.
+   */
   public constructor(
     public readonly merkleTreePath: MerkleTreePath,
     public readonly authenticator: Authenticator | null,
@@ -30,10 +49,21 @@ export class InclusionProof {
     }
   }
 
+  /**
+   * Type guard to check if data is IInclusionProofJson.
+   * @param data The data to check.
+   * @returns True if data is IInclusionProofJson, false otherwise.
+   */
   public static isJSON(data: unknown): data is IInclusionProofJson {
     return typeof data === 'object' && data !== null && 'merkleTreePath' in data;
   }
 
+  /**
+   * Creates an InclusionProof from a JSON object.
+   * @param data The JSON data.
+   * @returns An InclusionProof instance.
+   * @throws Error if parsing fails.
+   */
   public static fromJSON(data: unknown): InclusionProof {
     if (!InclusionProof.isJSON(data)) {
       throw new Error('Parsing inclusion proof json failed.');
@@ -46,6 +76,11 @@ export class InclusionProof {
     );
   }
 
+  /**
+   * Decodes an InclusionProof from CBOR bytes.
+   * @param bytes The CBOR-encoded bytes.
+   * @returns An InclusionProof instance.
+   */
   public static fromCBOR(bytes: Uint8Array): InclusionProof {
     const data = CborDecoder.readArray(bytes);
     const authenticator = CborDecoder.readOptional(data[1], Authenticator.fromCBOR);
@@ -54,6 +89,10 @@ export class InclusionProof {
     return new InclusionProof(MerkleTreePath.fromCBOR(data[0]), authenticator, transactionHash);
   }
 
+  /**
+   * Converts the InclusionProof to a JSON object.
+   * @returns The InclusionProof as IInclusionProofJson.
+   */
   public toJSON(): IInclusionProofJson {
     return {
       authenticator: this.authenticator?.toJSON() ?? null,
@@ -62,6 +101,10 @@ export class InclusionProof {
     };
   }
 
+  /**
+   * Encodes the InclusionProof to CBOR format.
+   * @returns The CBOR-encoded bytes.
+   */
   public toCBOR(): Uint8Array {
     return CborEncoder.encodeArray([
       this.merkleTreePath.toCBOR(),
@@ -70,6 +113,11 @@ export class InclusionProof {
     ]);
   }
 
+  /**
+   * Verifies the inclusion proof for a given request ID.
+   * @param requestId The request ID as a bigint.
+   * @returns A Promise resolving to the verification status.
+   */
   public async verify(requestId: bigint): Promise<InclusionProofVerificationStatus> {
     if (this.authenticator && this.transactionHash) {
       if (!(await this.authenticator.verify(this.transactionHash))) {
@@ -94,6 +142,10 @@ export class InclusionProof {
     return InclusionProofVerificationStatus.OK;
   }
 
+  /**
+   * Returns a string representation of the InclusionProof.
+   * @returns The string representation.
+   */
   public toString(): string {
     return dedent`
       Inclusion Proof

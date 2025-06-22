@@ -6,9 +6,13 @@ import { DataHash } from '../hash/DataHash.js';
  * JSON representation of a submit commitment request.
  */
 export interface ISubmitCommitmentRequestJson {
+  /** The request ID as a string. */
   requestId: string;
+  /** The transaction hash as a string. */
   transactionHash: string;
+  /** The authenticator as JSON. */
   authenticator: IAuthenticatorJson;
+  /** Optional flag to request a receipt. */
   receipt?: boolean;
 }
 
@@ -16,6 +20,13 @@ export interface ISubmitCommitmentRequestJson {
  * Request object sent by the client to the aggregator.
  */
 export class SubmitCommitmentRequest {
+  /**
+   * Constructs a SubmitCommitmentRequest instance.
+   * @param requestId The request ID.
+   * @param transactionHash The transaction hash.
+   * @param authenticator The authenticator.
+   * @param receipt Optional flag to request a receipt.
+   */
   public constructor(
     public readonly requestId: RequestId,
     public readonly transactionHash: DataHash,
@@ -25,9 +36,9 @@ export class SubmitCommitmentRequest {
 
   /**
    * Parse a JSON object into a SubmitCommitmentRequest object.
-   *
    * @param data Raw request
    * @returns SubmitCommitmentRequest object
+   * @throws Error if parsing fails.
    */
   public static fromJSON(data: unknown): SubmitCommitmentRequest {
     if (!SubmitCommitmentRequest.isJSON(data)) {
@@ -44,7 +55,6 @@ export class SubmitCommitmentRequest {
 
   /**
    * Check if the given data is a valid JSON request object.
-   *
    * @param data Raw request
    * @returns True if the data is a valid JSON request object
    */
@@ -64,7 +74,6 @@ export class SubmitCommitmentRequest {
 
   /**
    * Convert the request to a JSON object.
-   *
    * @returns JSON object
    */
   public toJSON(): ISubmitCommitmentRequestJson {
