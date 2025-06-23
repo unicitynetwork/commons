@@ -64,7 +64,7 @@ export class Authenticator {
     return new Authenticator(
       signingService.algorithm,
       signingService.publicKey,
-      await signingService.sign(transactionHash.data),
+      await signingService.sign(transactionHash),
       stateHash,
     );
   }
@@ -155,7 +155,7 @@ export class Authenticator {
    * @returns A Promise resolving to true if valid, false otherwise.
    */
   public verify(transactionHash: DataHash): Promise<boolean> {
-    return SigningService.verifyWithPublicKey(transactionHash.data, this.signature.bytes, this.publicKey);
+    return SigningService.verifyWithPublicKey(transactionHash, this.signature.bytes, this.publicKey);
   }
 
   /**
