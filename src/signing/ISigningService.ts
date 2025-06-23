@@ -1,8 +1,9 @@
 import { ISignature } from './ISignature.js';
+import { DataHash } from '../hash/DataHash.js';
 
 export interface ISigningService<T extends ISignature> {
   readonly publicKey: Uint8Array;
   readonly algorithm: string;
-  sign(hash: Uint8Array): Promise<T>;
-  verify(hash: Uint8Array, signature: T): Promise<boolean>;
+  sign(hash: DataHash): Promise<T>;
+  verify(hash: DataHash, signature: T): Promise<boolean>;
 }

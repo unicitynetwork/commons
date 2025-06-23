@@ -39,7 +39,7 @@ describe('Authenticator', () => {
     const authenticator = new Authenticator(
       'secp256k1',
       signingService.publicKey,
-      await signingService.sign(new Uint8Array(32)),
+      await signingService.sign(DataHash.fromImprint(new Uint8Array(34))),
       DataHash.fromImprint(new Uint8Array(34)),
     );
 
