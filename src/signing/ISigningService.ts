@@ -1,5 +1,5 @@
 import { ISignature } from './ISignature.js';
-import { DataHash } from '../hash/DataHash.js';
+import type { DataHash } from '../hash/DataHash.js';
 
 export interface ISigningService<T extends ISignature> {
   readonly publicKey: Uint8Array;
