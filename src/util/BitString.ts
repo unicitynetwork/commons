@@ -1,10 +1,10 @@
+import { BigintConverter } from './BigintConverter.js';
 import { HexConverter } from './HexConverter.js';
 import { DataHash } from '../hash/DataHash.js';
 
 export class BitString {
   /**
    * Represents a bit string as a bigint.
-   * The first bit is always set to 1 to not lose leading bits when converting to bigint.
    */
   private readonly value: bigint;
 
@@ -26,7 +26,8 @@ export class BitString {
   }
 
   /**
-   * Converts bit string to bigint
+   * Converts BitString to bigint by adding a leading byte 1 to input byte array.
+   * This is to ensure that the bigint will retain the leading zero bits.
    * @returns {bigint} The bigint representation of the bit string
    */
   public toBigInt(): bigint {
@@ -34,7 +35,15 @@ export class BitString {
   }
 
   /**
-   * Converts bit string to string
+   * Converts bit string to Uint8Array.
+   * @returns {Uint8Array} The Uint8Array representation of the bit string
+   */
+  public toBytes(): Uint8Array {
+    return BigintConverter.encode(this.value).slice(1);
+  }
+
+  /**
+   * Converts bit string to string.
    * @returns {string} The string representation of the bit string
    */
   public toString(): string {
