@@ -71,7 +71,7 @@ describe('Sum-Certifying Tree', function () {
 
   it('should throw error on non positive path or sum', () => {
     const tree = new SparseMerkleSumTreeBuilder(new DataHasherFactory(HashAlgorithm.SHA256, NodeDataHasher));
-    expect(() => tree.addLeaf(-1n, new Uint8Array(32), 100n)).toThrow('Path must be larger than 0.');
+    expect(() => tree.addLeaf(-1n, new Uint8Array(32), 100n)).toThrow('Path must be greater than 0.');
     expect(() => tree.addLeaf(1n, new Uint8Array(32), -1n)).toThrow('Sum must be a unsigned bigint.');
   });
 });

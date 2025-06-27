@@ -15,7 +15,7 @@ export class SparseMerkleTreeBuilder {
 
   public addLeaf(path: bigint, valueRef: Uint8Array): void {
     if (path < 1n) {
-      throw new Error('Path must be larger than 0.');
+      throw new Error('Path must be greater than 0.');
     }
 
     const isRight = path & 1n;
