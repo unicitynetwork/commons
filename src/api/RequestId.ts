@@ -1,7 +1,7 @@
 import { DataHash } from '../hash/DataHash.js';
 import { DataHasher } from '../hash/DataHasher.js';
 import { HashAlgorithm } from '../hash/HashAlgorithm.js';
-import { HexConverter } from '../util/HexConverter.js';
+import { BitString } from '../util/BitString.js';
 
 /**
  * Represents a unique request identifier derived from a public key and state hash.
@@ -53,11 +53,11 @@ export class RequestId {
   }
 
   /**
-   * Converts the RequestId to a bigint.
-   * @returns The bigint representation of the request ID.
+   * Converts the RequestId to a BitString.
+   * @return The BitString representation of the RequestId.
    */
-  public toBigInt(): bigint {
-    return BigInt(`0x01${HexConverter.encode(this.hash.imprint)}`);
+  public toBitString(): BitString {
+    return BitString.fromDataHash(this.hash);
   }
 
   /**

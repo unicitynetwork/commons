@@ -65,6 +65,11 @@ export class MerkleTreePath {
     };
   }
 
+  /**
+   * Verifies the tree path against the root hash and request ID.
+   * @param requestId The request ID as bit string in bigint format to verify against the path.
+   * @returns A Promise resolving to a PathVerificationResult indicating success or failure.
+   */
   public async verify(requestId: bigint): Promise<PathVerificationResult> {
     let currentPath = 1n;
     let currentHash: DataHash | null = null;

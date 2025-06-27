@@ -29,7 +29,7 @@ describe('InclusionProof', () => {
     );
     const lf = await LeafValue.create(authenticator, transactionHash);
     const smt = new SparseMerkleTreeBuilder(new DataHasherFactory(HashAlgorithm.SHA256, NodeDataHasher));
-    const reqID = (await RequestId.create(publicKey, authenticator.stateHash)).toBigInt();
+    const reqID = (await RequestId.create(publicKey, authenticator.stateHash)).toBitString().toBigInt();
     smt.addLeaf(reqID, lf.bytes);
 
     const root = await smt.calculateRoot();
@@ -119,8 +119,10 @@ describe('InclusionProof', () => {
     const requestId = await RequestId.create(publicKey, authenticator.stateHash);
     const inclusionProof = new InclusionProof(merkleTreePath, authenticator, transactionHash);
 
-    expect(await inclusionProof.verify(requestId.toBigInt())).toEqual(InclusionProofVerificationStatus.OK);
-    expect(await inclusionProof.verify(100n)).toEqual(InclusionProofVerificationStatus.PATH_NOT_INCLUDED);
+    expect(await inclusionProof.verify(requestId)).toEqual(InclusionProofVerificationStatus.OK);
+    expect(
+      await inclusionProof.verify(await RequestId.createFromImprint(new Uint8Array(32), new Uint8Array(34))),
+    ).toEqual(InclusionProofVerificationStatus.PATH_NOT_INCLUDED);
 
     const invalidTransactionHashInclusionProof = new InclusionProof(
       merkleTreePath,
@@ -131,7 +133,7 @@ describe('InclusionProof', () => {
       ),
     );
 
-    expect(await invalidTransactionHashInclusionProof.verify(requestId.toBigInt())).toEqual(
+    expect(await invalidTransactionHashInclusionProof.verify(requestId)).toEqual(
       InclusionProofVerificationStatus.NOT_AUTHENTICATED,
     );
   });

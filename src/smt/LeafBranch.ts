@@ -18,7 +18,7 @@ export class LeafBranch {
 
   public toString(): string {
     return `
-      Leaf[${this.path}]
+      Leaf[${this.path.toString(2)}]
         Value: ${HexConverter.encode(this._value)}
     `;
   }
