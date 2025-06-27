@@ -53,8 +53,8 @@ export class RequestId {
   }
 
   /**
-   * Converts the RequestId to a bigint.
-   * @returns The bigint representation of the request ID.
+   * Converts the RequestId to a BitString.
+   * @return The BitString representation of the RequestId.
    */
   public toBitString(): BitString {
     return new BitString(this.hash.imprint);
