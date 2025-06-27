@@ -119,10 +119,10 @@ describe('InclusionProof', () => {
     const requestId = await RequestId.create(publicKey, authenticator.stateHash);
     const inclusionProof = new InclusionProof(merkleTreePath, authenticator, transactionHash);
 
-    expect(await inclusionProof.verify(requestId.toBitString().toBigInt())).toEqual(
-      InclusionProofVerificationStatus.OK,
-    );
-    expect(await inclusionProof.verify(100n)).toEqual(InclusionProofVerificationStatus.PATH_NOT_INCLUDED);
+    expect(await inclusionProof.verify(requestId)).toEqual(InclusionProofVerificationStatus.OK);
+    expect(
+      await inclusionProof.verify(await RequestId.createFromImprint(new Uint8Array(32), new Uint8Array(34))),
+    ).toEqual(InclusionProofVerificationStatus.PATH_NOT_INCLUDED);
 
     const invalidTransactionHashInclusionProof = new InclusionProof(
       merkleTreePath,
@@ -133,7 +133,7 @@ describe('InclusionProof', () => {
       ),
     );
 
-    expect(await invalidTransactionHashInclusionProof.verify(requestId.toBitString().toBigInt())).toEqual(
+    expect(await invalidTransactionHashInclusionProof.verify(requestId)).toEqual(
       InclusionProofVerificationStatus.NOT_AUTHENTICATED,
     );
   });

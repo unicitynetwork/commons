@@ -57,7 +57,7 @@ export class RequestId {
    * @return The BitString representation of the RequestId.
    */
   public toBitString(): BitString {
-    return new BitString(this.hash.imprint);
+    return BitString.fromDataHash(this.hash);
   }
 
   /**

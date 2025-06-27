@@ -14,6 +14,10 @@ export class SparseMerkleTreeBuilder {
   public constructor(public readonly factory: IDataHasherFactory<IDataHasher>) {}
 
   public addLeaf(path: bigint, valueRef: Uint8Array): void {
+    if (path < 1n) {
+      throw new Error('Path must be larger than 0.');
+    }
+
     const isRight = path & 1n;
     const value = new Uint8Array(valueRef);
     if (isRight) {

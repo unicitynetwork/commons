@@ -17,11 +17,11 @@ export class SparseMerkleSumTreeBuilder {
 
   public addLeaf(path: bigint, value: Uint8Array, sum: bigint): void {
     if (sum < 0n) {
-      throw new Error('Sum must be a unsigned integer.');
+      throw new Error('Sum must be a unsigned bigint.');
     }
 
     if (path < 1n) {
-      throw new Error('Path must be a unsigned integer.');
+      throw new Error('Path must be larger than 0.');
     }
 
     const isRight = path & 1n;

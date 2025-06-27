@@ -1,5 +1,6 @@
 import { Authenticator, IAuthenticatorJson } from './Authenticator.js';
 import { LeafValue } from './LeafValue.js';
+import { RequestId } from './RequestId.js';
 import { CborDecoder } from '../cbor/CborDecoder.js';
 import { CborEncoder } from '../cbor/CborEncoder.js';
 import { DataHash } from '../hash/DataHash.js';
@@ -115,10 +116,10 @@ export class InclusionProof {
 
   /**
    * Verifies the inclusion proof for a given request ID.
-   * @param requestId The request ID as a bigint.
+   * @param requestId The request ID.
    * @returns A Promise resolving to the verification status.
    */
-  public async verify(requestId: bigint): Promise<InclusionProofVerificationStatus> {
+  public async verify(requestId: RequestId): Promise<InclusionProofVerificationStatus> {
     if (this.authenticator && this.transactionHash) {
       if (!(await this.authenticator.verify(this.transactionHash))) {
         return InclusionProofVerificationStatus.NOT_AUTHENTICATED;
@@ -130,7 +131,7 @@ export class InclusionProof {
       }
     }
 
-    const result = await this.merkleTreePath.verify(requestId);
+    const result = await this.merkleTreePath.verify(requestId.toBitString().toBigInt());
     if (!result.isPathValid) {
       return InclusionProofVerificationStatus.PATH_INVALID;
     }

@@ -1,4 +1,5 @@
 import { HexConverter } from './HexConverter.js';
+import { DataHash } from '../hash/DataHash.js';
 
 export class BitString {
   /**
@@ -13,6 +14,15 @@ export class BitString {
    */
   public constructor(data: Uint8Array) {
     this.value = BigInt(`0x01${HexConverter.encode(data)}`);
+  }
+
+  /**
+   * Creates a BitString from a DataHash imprint.
+   * @param data DataHash
+   * @return {BitString} A BitString instance
+   */
+  public static fromDataHash(data: DataHash): BitString {
+    return new BitString(data.imprint);
   }
 
   /**
