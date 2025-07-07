@@ -1,4 +1,4 @@
-import { CborEncoder } from '../../src/cbor/CborEncoder';
+import { CborEncoder } from '../../src/cbor/CborEncoder.js';
 import { DataHasher } from '../../src/hash/DataHasher.js';
 import { DataHasherFactory } from '../../src/hash/DataHasherFactory.js';
 import { HashAlgorithm } from '../../src/hash/HashAlgorithm.js';
@@ -8,7 +8,7 @@ import { MerkleSumTreeRootNode } from '../../src/smst/MerkleSumTreeRootNode.js';
 import { NodeBranch } from '../../src/smst/NodeBranch.js';
 import { PendingLeafBranch } from '../../src/smst/PendingLeafBranch.js';
 import { SparseMerkleSumTreeBuilder } from '../../src/smst/SparseMerkleSumTreeBuilder.js';
-import { BigintConverter } from '../../src/util/BigintConverter';
+import { BigintConverter } from '../../src/util/BigintConverter.js';
 
 interface ISumLeaf {
   readonly value: Uint8Array;
