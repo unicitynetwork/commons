@@ -1,3 +1,4 @@
+import { Branch } from './Branch.js';
 import { LeafBranch } from './LeafBranch.js';
 import { MerkleSumTreeRootNode } from './MerkleSumTreeRootNode.js';
 import { PendingBranch } from './PendingBranch.js';
@@ -10,12 +11,12 @@ import { calculateCommonPath } from '../smt/SparseMerkleTreePathUtils.js';
 import { BigintConverter } from '../util/BigintConverter.js';
 
 export class SparseMerkleSumTreeBuilder {
-  private left: PendingBranch | null = null;
-  private right: PendingBranch | null = null;
+  private left: Promise<PendingBranch | null> = Promise.resolve(null);
+  private right: Promise<PendingBranch | null> = Promise.resolve(null);
 
   public constructor(private readonly factory: IDataHasherFactory<IDataHasher>) {}
 
-  public addLeaf(path: bigint, value: Uint8Array, sum: bigint): void {
+  public async addLeaf(path: bigint, valueRef: Uint8Array, sum: bigint): Promise<void> {
     if (sum < 0n) {
       throw new Error('Sum must be a unsigned bigint.');
     }
@@ -25,15 +26,33 @@ export class SparseMerkleSumTreeBuilder {
     }
 
     const isRight = path & 1n;
+    const value = new Uint8Array(valueRef);
+    const branchPromise = isRight ? this.right : this.left;
+    const newBranchPromise = branchPromise.then((branch) =>
+      branch ? this.buildTree(branch, path, value, sum) : new PendingLeafBranch(path, value, sum),
+    );
+
     if (isRight) {
-      this.right = this.right ? this.buildTree(this.right, path, value, sum) : new PendingLeafBranch(path, value, sum);
+      this.right = newBranchPromise.catch(() => branchPromise);
     } else {
-      this.left = this.left ? this.buildTree(this.left, path, value, sum) : new PendingLeafBranch(path, value, sum);
+      this.left = newBranchPromise.catch(() => branchPromise);
     }
+
+    await newBranchPromise;
   }
 
   public async calculateRoot(): Promise<MerkleSumTreeRootNode> {
-    const [left, right] = await Promise.all([this.left?.finalize(this.factory), this.right?.finalize(this.factory)]);
+    this.left = this.left.then(
+      (branch): Promise<Branch | null> => (branch ? branch.finalize(this.factory) : Promise.resolve(null)),
+    );
+    this.right = this.right?.then(
+      (branch): Promise<Branch | null> => (branch ? branch.finalize(this.factory) : Promise.resolve(null)),
+    );
+    const [left, right] = await Promise.all([
+      this.left as Promise<Branch | null>,
+      this.right as Promise<Branch | null>,
+    ]);
+
     const hash = await this.factory
       .create()
       .update(
@@ -54,8 +73,6 @@ export class SparseMerkleSumTreeBuilder {
       )
       .digest();
 
-    this.left = left ?? null;
-    this.right = right ?? null;
     return new MerkleSumTreeRootNode(left ?? null, right ?? null, (left?.sum ?? 0n) + (right?.sum ?? 0n), hash);
   }
 

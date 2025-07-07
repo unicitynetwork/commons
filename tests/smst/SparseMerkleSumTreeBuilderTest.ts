@@ -1,7 +1,14 @@
+import { CborEncoder } from '../../src/cbor/CborEncoder';
+import { DataHasher } from '../../src/hash/DataHasher.js';
 import { DataHasherFactory } from '../../src/hash/DataHasherFactory.js';
 import { HashAlgorithm } from '../../src/hash/HashAlgorithm.js';
 import { NodeDataHasher } from '../../src/hash/NodeDataHasher.js';
+import { LeafBranch } from '../../src/smst/LeafBranch.js';
+import { MerkleSumTreeRootNode } from '../../src/smst/MerkleSumTreeRootNode.js';
+import { NodeBranch } from '../../src/smst/NodeBranch.js';
+import { PendingLeafBranch } from '../../src/smst/PendingLeafBranch.js';
 import { SparseMerkleSumTreeBuilder } from '../../src/smst/SparseMerkleSumTreeBuilder.js';
+import { BigintConverter } from '../../src/util/BigintConverter';
 
 interface ISumLeaf {
   readonly value: Uint8Array;
@@ -69,9 +76,71 @@ describe('Sum-Certifying Tree', function () {
     expect(root.sum).toEqual(200n);
   });
 
-  it('should throw error on non positive path or sum', () => {
+  it('should throw error on non positive path or sum', async () => {
     const tree = new SparseMerkleSumTreeBuilder(new DataHasherFactory(HashAlgorithm.SHA256, NodeDataHasher));
-    expect(() => tree.addLeaf(-1n, new Uint8Array(32), 100n)).toThrow('Path must be greater than 0.');
-    expect(() => tree.addLeaf(1n, new Uint8Array(32), -1n)).toThrow('Sum must be a unsigned bigint.');
+    await expect(tree.addLeaf(-1n, new Uint8Array(32), 100n)).rejects.toThrow('Path must be greater than 0.');
+    await expect(tree.addLeaf(1n, new Uint8Array(32), -1n)).rejects.toThrow('Sum must be a unsigned bigint.');
+  });
+
+  it('concurrency test', async () => {
+    const hasherFactory = new DataHasherFactory(HashAlgorithm.SHA256, NodeDataHasher);
+    const smt = new SparseMerkleSumTreeBuilder(hasherFactory);
+    smt.addLeaf(0b1000n, new Uint8Array(), 10n);
+    smt.calculateRoot().then((root) => {
+      expect(root.left).toBeInstanceOf(LeafBranch);
+      expect(root.right).toStrictEqual(null);
+    });
+    smt.addLeaf(0b1001n, new Uint8Array(), 20n);
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    const left = await new PendingLeafBranch(0b1000n, new Uint8Array(), 10n).finalize(hasherFactory);
+    const right = await new PendingLeafBranch(0b1001n, new Uint8Array(), 20n).finalize(hasherFactory);
+    await expect(smt.calculateRoot()).resolves.toEqual(
+      new MerkleSumTreeRootNode(
+        left,
+        right,
+        30n,
+        await new DataHasher(HashAlgorithm.SHA256)
+          .update(
+            CborEncoder.encodeArray([
+              left
+                ? CborEncoder.encodeArray([
+                    CborEncoder.encodeByteString(left.hash.imprint),
+                    CborEncoder.encodeByteString(BigintConverter.encode(left.sum)),
+                  ])
+                : CborEncoder.encodeNull(),
+              right
+                ? CborEncoder.encodeArray([
+                    CborEncoder.encodeByteString(right.hash.imprint),
+                    CborEncoder.encodeByteString(BigintConverter.encode(right.sum)),
+                  ])
+                : CborEncoder.encodeNull(),
+            ]),
+          )
+          .digest(),
+      ),
+    );
+  });
+
+  it('should handle concurrent addLeaf calls', async () => {
+    const smt = new SparseMerkleSumTreeBuilder(new DataHasherFactory(HashAlgorithm.SHA256, NodeDataHasher));
+
+    smt.addLeaf(0b1000n, new Uint8Array(), 1n);
+    smt.addLeaf(0b1001n, new Uint8Array(), 1n);
+    const root1 = smt.calculateRoot().then((root) => {
+      expect(root.left).toBeInstanceOf(LeafBranch);
+      expect(root.right).toBeInstanceOf(LeafBranch);
+    });
+    smt.addLeaf(0b1010n, new Uint8Array(), 1n);
+    const root2 = smt.calculateRoot().then((root) => {
+      expect(root.left).toBeInstanceOf(NodeBranch);
+      expect(root.right).toBeInstanceOf(LeafBranch);
+    });
+
+    smt.addLeaf(0b1011n, new Uint8Array(), 1n);
+    const root3 = smt.calculateRoot().then((root) => {
+      expect(root.left).toBeInstanceOf(NodeBranch);
+      expect(root.right).toBeInstanceOf(NodeBranch);
+    });
+    await Promise.all([root1, root2, root3]);
   });
 });
