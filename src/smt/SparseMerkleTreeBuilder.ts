@@ -1,3 +1,4 @@
+import { Branch } from './Branch.js';
 import { LeafBranch } from './LeafBranch.js';
 import { MerkleTreeRootNode } from './MerkleTreeRootNode.js';
 import { PendingBranch } from './PendingBranch.js';
@@ -8,35 +9,50 @@ import { IDataHasher } from '../hash/IDataHasher.js';
 import { IDataHasherFactory } from '../hash/IDataHasherFactory.js';
 
 export class SparseMerkleTreeBuilder {
-  private left: PendingBranch | null = null;
-  private right: PendingBranch | null = null;
+  private left: Promise<PendingBranch | null> = Promise.resolve(null);
+  private right: Promise<PendingBranch | null> = Promise.resolve(null);
 
   public constructor(public readonly factory: IDataHasherFactory<IDataHasher>) {}
 
-  public addLeaf(path: bigint, valueRef: Uint8Array): void {
+  public async addLeaf(path: bigint, valueRef: Uint8Array): Promise<void> {
     if (path < 1n) {
       throw new Error('Path must be greater than 0.');
     }
 
     const isRight = path & 1n;
     const value = new Uint8Array(valueRef);
+    const branchPromise = isRight ? this.right : this.left;
+    const newBranchPromise = branchPromise.then((branch) =>
+      branch ? this.buildTree(branch, path, value) : new PendingLeafBranch(path, value),
+    );
+
     if (isRight) {
-      this.right = this.right ? this.buildTree(this.right, path, value) : new PendingLeafBranch(path, value);
+      this.right = newBranchPromise.catch(() => branchPromise);
     } else {
-      this.left = this.left ? this.buildTree(this.left, path, value) : new PendingLeafBranch(path, value);
+      this.left = newBranchPromise.catch(() => branchPromise);
     }
+
+    await newBranchPromise;
   }
 
   public async calculateRoot(): Promise<MerkleTreeRootNode> {
-    const [left, right] = await Promise.all([this.left?.finalize(this.factory), this.right?.finalize(this.factory)]);
+    this.left = this.left.then(
+      (branch): Promise<Branch | null> => (branch ? branch.finalize(this.factory) : Promise.resolve(null)),
+    );
+    this.right = this.right?.then(
+      (branch): Promise<Branch | null> => (branch ? branch.finalize(this.factory) : Promise.resolve(null)),
+    );
+    const [left, right] = await Promise.all([
+      this.left as Promise<Branch | null>,
+      this.right as Promise<Branch | null>,
+    ]);
+
     const hash = await this.factory
       .create()
       .update(left?.hash.data ?? new Uint8Array(1))
       .update(right?.hash.data ?? new Uint8Array(1))
       .digest();
 
-    this.left = left ?? null;
-    this.right = right ?? null;
     return new MerkleTreeRootNode(left ?? null, right ?? null, hash);
   }
 
