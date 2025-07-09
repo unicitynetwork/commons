@@ -9,7 +9,7 @@ import { HashAlgorithm } from '../../src/hash/HashAlgorithm.js';
 import { NodeDataHasher } from '../../src/hash/NodeDataHasher.js';
 import { SigningService } from '../../src/signing/SigningService.js';
 import { MerkleTreePath } from '../../src/smt/MerkleTreePath.js';
-import { SparseMerkleTreeBuilder } from '../../src/smt/SparseMerkleTreeBuilder.js';
+import { SparseMerkleTree } from '../../src/smt/SparseMerkleTree.js';
 import { HexConverter } from '../../src/util/HexConverter.js';
 
 describe('InclusionProof', () => {
@@ -28,7 +28,7 @@ describe('InclusionProof', () => {
       DataHash.fromImprint(new Uint8Array(34)),
     );
     const lf = await LeafValue.create(authenticator, transactionHash);
-    const smt = new SparseMerkleTreeBuilder(new DataHasherFactory(HashAlgorithm.SHA256, NodeDataHasher));
+    const smt = new SparseMerkleTree(new DataHasherFactory(HashAlgorithm.SHA256, NodeDataHasher));
     const reqID = (await RequestId.create(publicKey, authenticator.stateHash)).toBitString().toBigInt();
     smt.addLeaf(reqID, lf.bytes);
 

@@ -1,5 +1,4 @@
 import { DataHash } from '../../src/hash/DataHash.js';
-import { DataHasher } from '../../src/hash/DataHasher.js';
 import { DataHasherFactory } from '../../src/hash/DataHasherFactory.js';
 import { HashAlgorithm } from '../../src/hash/HashAlgorithm.js';
 import { NodeDataHasher } from '../../src/hash/NodeDataHasher.js';
@@ -8,7 +7,7 @@ import { LeafBranch } from '../../src/smt/LeafBranch.js';
 import { MerkleTreeRootNode } from '../../src/smt/MerkleTreeRootNode.js';
 import { NodeBranch } from '../../src/smt/NodeBranch.js';
 import { PendingLeafBranch } from '../../src/smt/PendingLeafBranch.js';
-import { SparseMerkleTreeBuilder } from '../../src/smt/SparseMerkleTreeBuilder.js';
+import { SparseMerkleTree } from '../../src/smt/SparseMerkleTree.js';
 import { HexConverter } from '../../src/util/HexConverter.js';
 
 type TreeResult = { path: bigint; hash: string; value?: string; left?: TreeResult; right?: TreeResult };
@@ -124,7 +123,7 @@ describe('Sparse Merkle Tree tests', function () {
 
   it('tree should be half calculated', async () => {
     const hashFactory = new DataHasherFactory(HashAlgorithm.SHA256, NodeDataHasher);
-    const smt = new SparseMerkleTreeBuilder(hashFactory);
+    const smt = new SparseMerkleTree(hashFactory);
 
     smt.addLeaf(0b10n, new Uint8Array([1, 2, 3]));
     await smt.calculateRoot();
@@ -141,7 +140,7 @@ describe('Sparse Merkle Tree tests', function () {
   });
 
   it('should verify the tree', async () => {
-    const smt = new SparseMerkleTreeBuilder(new DataHasherFactory(HashAlgorithm.SHA256, NodeDataHasher));
+    const smt = new SparseMerkleTree(new DataHasherFactory(HashAlgorithm.SHA256, NodeDataHasher));
     const textEncoder = new TextEncoder();
 
     for (const leaf of leavesSparse) {
@@ -162,7 +161,7 @@ describe('Sparse Merkle Tree tests', function () {
   });
 
   it('get path', async () => {
-    const smt = new SparseMerkleTreeBuilder(new DataHasherFactory(HashAlgorithm.SHA256, NodeDataHasher));
+    const smt = new SparseMerkleTree(new DataHasherFactory(HashAlgorithm.SHA256, NodeDataHasher));
     const textEncoder = new TextEncoder();
 
     for (const leaf of leavesSparse) {
@@ -197,7 +196,7 @@ describe('Sparse Merkle Tree tests', function () {
       result: true,
     });
 
-    const emptyRoot = await new SparseMerkleTreeBuilder(
+    const emptyRoot = await new SparseMerkleTree(
       new DataHasherFactory(HashAlgorithm.SHA256, NodeDataHasher),
     ).calculateRoot();
     path = emptyRoot.getPath(0b100n);
@@ -210,7 +209,7 @@ describe('Sparse Merkle Tree tests', function () {
 
   it('concurrency test', async () => {
     const hasherFactory = new DataHasherFactory(HashAlgorithm.SHA256, NodeDataHasher);
-    const smt = new SparseMerkleTreeBuilder(hasherFactory);
+    const smt = new SparseMerkleTree(hasherFactory);
     smt.addLeaf(0b1000n, new Uint8Array());
     smt.calculateRoot().then((root) => {
       expect(root.left).toBeInstanceOf(LeafBranch);
@@ -220,20 +219,11 @@ describe('Sparse Merkle Tree tests', function () {
     const left = await new PendingLeafBranch(0b1000n, new Uint8Array()).finalize(hasherFactory);
     const right = await new PendingLeafBranch(0b1001n, new Uint8Array()).finalize(hasherFactory);
     await new Promise((resolve) => setTimeout(resolve, 100));
-    await expect(smt.calculateRoot()).resolves.toEqual(
-      new MerkleTreeRootNode(
-        left,
-        right,
-        await new DataHasher(HashAlgorithm.SHA256)
-          .update(left?.hash.data ?? new Uint8Array(1))
-          .update(right?.hash.data ?? new Uint8Array(1))
-          .digest(),
-      ),
-    );
+    await expect(smt.calculateRoot()).resolves.toEqual(await MerkleTreeRootNode.create(left, right, hasherFactory));
   });
 
   it('should handle concurrent addLeaf calls', async () => {
-    const smt = new SparseMerkleTreeBuilder(new DataHasherFactory(HashAlgorithm.SHA256, NodeDataHasher));
+    const smt = new SparseMerkleTree(new DataHasherFactory(HashAlgorithm.SHA256, NodeDataHasher));
     const textEncoder = new TextEncoder();
 
     smt.addLeaf(0b1000n, textEncoder.encode('A'));
