@@ -30,7 +30,7 @@ export class SparseMerkleSumTree {
    */
   public async addLeaf(path: bigint, valueRef: Uint8Array, sum: bigint): Promise<void> {
     if (sum < 0n) {
-      throw new Error('Sum must be a unsigned bigint.');
+      throw new Error('Sum must be an unsigned bigint.');
     }
 
     if (path < 1n) {
