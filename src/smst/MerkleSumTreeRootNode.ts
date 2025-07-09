@@ -28,6 +28,7 @@ export class MerkleSumTreeRootNode {
    * @param left Root node left branch.
    * @param right Root node right branch.
    * @param factory Factory to create data hashers.
+   * @return A promise that resolves to a new MerkleSumTreeRootNode instance.
    */
   public static async create(
     left: Branch | null,
