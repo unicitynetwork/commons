@@ -4,21 +4,33 @@ import { MerkleSumTreeRootNode } from './MerkleSumTreeRootNode.js';
 import { PendingBranch } from './PendingBranch.js';
 import { PendingLeafBranch } from './PendingLeafBranch.js';
 import { PendingNodeBranch } from './PendingNodeBranch.js';
-import { CborEncoder } from '../cbor/CborEncoder.js';
 import { IDataHasher } from '../hash/IDataHasher.js';
 import { IDataHasherFactory } from '../hash/IDataHasherFactory.js';
 import { calculateCommonPath } from '../smt/SparseMerkleTreePathUtils.js';
-import { BigintConverter } from '../util/BigintConverter.js';
 
-export class SparseMerkleSumTreeBuilder {
+/**
+ * Sparse Merkle Sum Tree implementation.
+ */
+export class SparseMerkleSumTree {
   private left: Promise<PendingBranch | null> = Promise.resolve(null);
   private right: Promise<PendingBranch | null> = Promise.resolve(null);
 
+  /**
+   * Creates a new instance of SparseMerkleSumTree.
+   * @param factory The factory to create data hashers.
+   */
   public constructor(private readonly factory: IDataHasherFactory<IDataHasher>) {}
 
+  /**
+   * Adds a leaf to the tree at the specified path with the given value and sum.
+   * @param path The path where the leaf should be added.
+   * @param valueRef The value of the leaf as a Uint8Array.
+   * @param sum The sum associated with the leaf.
+   * @throws Error will throw an error if the path is less than 1 or if the sum is negative.
+   */
   public async addLeaf(path: bigint, valueRef: Uint8Array, sum: bigint): Promise<void> {
     if (sum < 0n) {
-      throw new Error('Sum must be a unsigned bigint.');
+      throw new Error('Sum must be an unsigned bigint.');
     }
 
     if (path < 1n) {
@@ -41,6 +53,10 @@ export class SparseMerkleSumTreeBuilder {
     await newBranchPromise;
   }
 
+  /**
+   * Calculates the hashes for tree and returns root of the tree for given state.
+   * @returns A promise that resolves to the MerkleSumTreeRootNode representing the root of the tree.
+   */
   public async calculateRoot(): Promise<MerkleSumTreeRootNode> {
     this.left = this.left.then(
       (branch): Promise<Branch | null> => (branch ? branch.finalize(this.factory) : Promise.resolve(null)),
@@ -53,27 +69,7 @@ export class SparseMerkleSumTreeBuilder {
       this.right as Promise<Branch | null>,
     ]);
 
-    const hash = await this.factory
-      .create()
-      .update(
-        CborEncoder.encodeArray([
-          left
-            ? CborEncoder.encodeArray([
-                CborEncoder.encodeByteString(left.hash.imprint),
-                CborEncoder.encodeByteString(BigintConverter.encode(left.sum)),
-              ])
-            : CborEncoder.encodeNull(),
-          right
-            ? CborEncoder.encodeArray([
-                CborEncoder.encodeByteString(right.hash.imprint),
-                CborEncoder.encodeByteString(BigintConverter.encode(right.sum)),
-              ])
-            : CborEncoder.encodeNull(),
-        ]),
-      )
-      .digest();
-
-    return new MerkleSumTreeRootNode(left ?? null, right ?? null, (left?.sum ?? 0n) + (right?.sum ?? 0n), hash);
+    return MerkleSumTreeRootNode.create(left, right, this.factory);
   }
 
   private buildTree(branch: PendingBranch, remainingPath: bigint, value: Uint8Array, sum: bigint): PendingBranch {

@@ -8,12 +8,25 @@ import { calculateCommonPath } from './SparseMerkleTreePathUtils.js';
 import { IDataHasher } from '../hash/IDataHasher.js';
 import { IDataHasherFactory } from '../hash/IDataHasherFactory.js';
 
-export class SparseMerkleTreeBuilder {
+/**
+ * Sparse Merkle Tree implementation.
+ */
+export class SparseMerkleTree {
   private left: Promise<PendingBranch | null> = Promise.resolve(null);
   private right: Promise<PendingBranch | null> = Promise.resolve(null);
 
+  /**
+   * Creates a new instance of SparseMerkleTree.
+   * @param factory The factory to create data hashers.
+   */
   public constructor(public readonly factory: IDataHasherFactory<IDataHasher>) {}
 
+  /**
+   * Adds a leaf to the tree at the specified path with the given value.
+   * @param path The path where the leaf should be added.
+   * @param valueRef The value of the leaf as a Uint8Array.
+   * @throws Error will throw an error if the path is less than 1.
+   */
   public async addLeaf(path: bigint, valueRef: Uint8Array): Promise<void> {
     if (path < 1n) {
       throw new Error('Path must be greater than 0.');
@@ -35,6 +48,10 @@ export class SparseMerkleTreeBuilder {
     await newBranchPromise;
   }
 
+  /**
+   * Calculates the hashes for tree and returns root of the tree for given state.
+   * @returns A promise that resolves to the MerkleTreeRootNode representing the root of the tree.
+   */
   public async calculateRoot(): Promise<MerkleTreeRootNode> {
     this.left = this.left.then(
       (branch): Promise<Branch | null> => (branch ? branch.finalize(this.factory) : Promise.resolve(null)),
@@ -47,13 +64,7 @@ export class SparseMerkleTreeBuilder {
       this.right as Promise<Branch | null>,
     ]);
 
-    const hash = await this.factory
-      .create()
-      .update(left?.hash.data ?? new Uint8Array(1))
-      .update(right?.hash.data ?? new Uint8Array(1))
-      .digest();
-
-    return new MerkleTreeRootNode(left ?? null, right ?? null, hash);
+    return MerkleTreeRootNode.create(left, right, this.factory);
   }
 
   private buildTree(branch: PendingBranch, remainingPath: bigint, value: Uint8Array): PendingBranch {
