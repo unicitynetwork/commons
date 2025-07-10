@@ -6,6 +6,8 @@ import { PendingLeafBranch } from './PendingLeafBranch.js';
 import { PendingNodeBranch } from './PendingNodeBranch.js';
 import { IDataHasher } from '../hash/IDataHasher.js';
 import { IDataHasherFactory } from '../hash/IDataHasherFactory.js';
+import { LeafInBranchError } from '../smt/LeafInBranchError.js';
+import { LeafOutOfBoundsError } from '../smt/LeafOutOfBoundsError.js';
 import { calculateCommonPath } from '../smt/SparseMerkleTreePathUtils.js';
 
 /**
@@ -77,13 +79,13 @@ export class SparseMerkleSumTree {
     const isRight = (remainingPath >> commonPath.length) & 1n;
 
     if (commonPath.path === remainingPath) {
-      throw new Error('Cannot add leaf inside branch.');
+      throw new LeafInBranchError();
     }
 
     // If a leaf must be split from the middle
     if (branch instanceof PendingLeafBranch || branch instanceof LeafBranch) {
       if (commonPath.path === branch.path) {
-        throw new Error('Cannot extend tree through leaf.');
+        throw new LeafOutOfBoundsError();
       }
 
       const oldBranch = new PendingLeafBranch(branch.path >> commonPath.length, branch.value, branch.sum);
