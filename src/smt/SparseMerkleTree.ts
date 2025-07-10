@@ -1,5 +1,7 @@
 import { Branch } from './Branch.js';
 import { LeafBranch } from './LeafBranch.js';
+import { LeafInBranchError } from './LeafInBranchError.js';
+import { LeafOutOfBoundsError } from './LeafOutOfBoundsError.js';
 import { MerkleTreeRootNode } from './MerkleTreeRootNode.js';
 import { PendingBranch } from './PendingBranch.js';
 import { PendingLeafBranch } from './PendingLeafBranch.js';
@@ -72,13 +74,13 @@ export class SparseMerkleTree {
     const isRight = (remainingPath >> commonPath.length) & 1n;
 
     if (commonPath.path === remainingPath) {
-      throw new Error('Cannot add leaf inside branch.');
+      throw new LeafInBranchError();
     }
 
     // If a leaf must be split from the middle
     if (branch instanceof PendingLeafBranch || branch instanceof LeafBranch) {
       if (commonPath.path === branch.path) {
-        throw new Error('Cannot extend tree through leaf.');
+        throw new LeafOutOfBoundsError();
       }
 
       const oldBranch = new PendingLeafBranch(branch.path >> commonPath.length, branch.value);
