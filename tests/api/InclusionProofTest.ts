@@ -35,7 +35,6 @@ describe('InclusionProof', () => {
     const root = await smt.calculateRoot();
 
     merkleTreePath = root.getPath(reqID);
-    console.log(merkleTreePath.toString());
   });
 
   it('should encode and decode json', () => {

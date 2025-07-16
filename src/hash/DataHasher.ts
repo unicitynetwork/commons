@@ -1,6 +1,5 @@
-import { ripemd160 } from '@noble/hashes/ripemd160';
-import { sha224, sha256 } from '@noble/hashes/sha256';
-import { sha384, sha512 } from '@noble/hashes/sha512';
+import { ripemd160 } from '@noble/hashes/legacy';
+import { sha224, sha256, sha384, sha512 } from '@noble/hashes/sha2';
 
 import { DataHash } from './DataHash.js';
 import { HashAlgorithm } from './HashAlgorithm.js';
