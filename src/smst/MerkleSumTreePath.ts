@@ -57,7 +57,8 @@ export class MerkleSumTreePath {
   public toCBOR(): Uint8Array {
     return CborEncoder.encodeArray([
       this.root.toCBOR(),
-      CborEncoder.encodeArray(this.steps.map((step: MerkleSumTreePathStep) => step.toCBOR())),
+      CborEncoder.encodeByteString(BigintConverter.encode(this.sum)),
+      CborEncoder.encodeArray(this.steps.map((step) => step.toCBOR())),
     ]);
   }
 
@@ -99,19 +100,19 @@ export class MerkleSumTreePath {
       }
 
       const isRight = step.path & 1n;
-      const right: [DataHash, bigint] | null = isRight
+      const right: [Uint8Array | null, bigint | null] | null = isRight
         ? hash
-          ? [hash, currentSum]
+          ? [hash.imprint, currentSum]
           : null
         : step.sibling
-          ? [step.sibling.hash, step.sibling.sum]
+          ? [step.sibling.value, step.sibling.sum]
           : null;
-      const left: [DataHash, bigint] | null = isRight
+      const left: [Uint8Array | null, bigint | null] | null = isRight
         ? step.sibling
-          ? [step.sibling.hash, step.sibling.sum]
+          ? [step.sibling.value, step.sibling.sum]
           : null
         : hash
-          ? [hash, currentSum]
+          ? [hash.imprint, currentSum]
           : null;
 
       currentHash = await new DataHasher(HashAlgorithm.SHA256)
@@ -119,14 +120,14 @@ export class MerkleSumTreePath {
           CborEncoder.encodeArray([
             left
               ? CborEncoder.encodeArray([
-                  CborEncoder.encodeByteString(left[0].imprint),
-                  CborEncoder.encodeByteString(BigintConverter.encode(left[1])),
+                  left[0] ? CborEncoder.encodeByteString(left[0]) : CborEncoder.encodeNull(),
+                  left[1] ? CborEncoder.encodeByteString(BigintConverter.encode(left[1])) : CborEncoder.encodeNull(),
                 ])
               : CborEncoder.encodeNull(),
             right
               ? CborEncoder.encodeArray([
-                  right[0] ? CborEncoder.encodeByteString(right[0].imprint) : CborEncoder.encodeNull(),
-                  CborEncoder.encodeByteString(BigintConverter.encode(right[1])),
+                  right[0] ? CborEncoder.encodeByteString(right[0]) : CborEncoder.encodeNull(),
+                  right[1] ? CborEncoder.encodeByteString(BigintConverter.encode(right[1])) : CborEncoder.encodeNull(),
                 ])
               : CborEncoder.encodeNull(),
           ]),

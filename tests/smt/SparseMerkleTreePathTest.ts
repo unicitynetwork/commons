@@ -37,22 +37,22 @@ describe('SparseMerkleTreePath', () => {
         {
           branch: ['76616c75653030303030303030'],
           path: '16',
-          sibling: '00006c5ad75422175395b4b63390e9dea5d0a39017f4750b78cc4b89ac6451265345',
+          sibling: ['6c5ad75422175395b4b63390e9dea5d0a39017f4750b78cc4b89ac6451265345'],
         },
         {
           branch: [],
           path: '4',
-          sibling: '0000ed454d5723b169c882ec9ad5e7f73b2bb804ec1a3cf1dd0eb24faa833ffd9eef',
+          sibling: ['ed454d5723b169c882ec9ad5e7f73b2bb804ec1a3cf1dd0eb24faa833ffd9eef'],
         },
         {
           branch: [],
           path: '2',
-          sibling: '0000e61c02aab33310b526224da3f2ed765ecea0e9a7ac5a307bf7736cca38d00067',
+          sibling: ['e61c02aab33310b526224da3f2ed765ecea0e9a7ac5a307bf7736cca38d00067'],
         },
         {
           branch: [],
           path: '2',
-          sibling: '0000be9ef65f6d3b6057acc7668fcbb23f9a5ae573d21bd5ebc3d9f4eee3a3c706a3',
+          sibling: ['be9ef65f6d3b6057acc7668fcbb23f9a5ae573d21bd5ebc3d9f4eee3a3c706a3'],
         },
       ],
     });
@@ -68,7 +68,7 @@ describe('SparseMerkleTreePath', () => {
         {
           branch: ['76616c75653030303030303030'],
           path: '16',
-          sibling: '00006c5ad75422175395b4b63390e9dea5d0a39017f4750b78cc4b89ac6451265345',
+          sibling: ['6c5ad75422175395b4b63390e9dea5d0a39017f4750b78cc4b89ac6451265345'],
         },
         {
           branch: null,

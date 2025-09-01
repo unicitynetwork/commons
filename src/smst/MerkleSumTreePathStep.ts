@@ -2,60 +2,12 @@ import { Branch } from './Branch.js';
 import { LeafBranch } from './LeafBranch.js';
 import { CborDecoder } from '../cbor/CborDecoder.js';
 import { CborEncoder } from '../cbor/CborEncoder.js';
-import { DataHash } from '../hash/DataHash.js';
 import { BigintConverter } from '../util/BigintConverter.js';
 import { HexConverter } from '../util/HexConverter.js';
 import { dedent } from '../util/StringUtils.js';
 
-type MerkleSumTreePathStepSiblingJson = [string, string];
-class MerkleSumTreePathStepSibling {
-  public constructor(
-    public readonly sum: bigint,
-    public readonly hash: DataHash,
-  ) {}
-
-  public static create(sibling: Branch): MerkleSumTreePathStepSibling {
-    return new MerkleSumTreePathStepSibling(sibling.sum, sibling.hash);
-  }
-
-  public static isJSON(data: unknown): data is MerkleSumTreePathStepSiblingJson {
-    return Array.isArray(data);
-  }
-
-  public static fromJSON(data: unknown): MerkleSumTreePathStepSibling {
-    if (!Array.isArray(data) || data.length !== 2) {
-      throw new Error('Parsing merkle tree path step branch failed.');
-    }
-
-    return new MerkleSumTreePathStepSibling(BigInt(data[0]), DataHash.fromJSON(data[1]));
-  }
-
-  public static fromCBOR(bytes: Uint8Array): MerkleSumTreePathStepSibling {
-    const data = CborDecoder.readArray(bytes);
-
-    return new MerkleSumTreePathStepSibling(
-      BigintConverter.decode(CborDecoder.readByteString(data[0])),
-      DataHash.fromCBOR(data[1]),
-    );
-  }
-
-  public toCBOR(): Uint8Array {
-    return CborEncoder.encodeArray([
-      CborEncoder.encodeByteString(BigintConverter.encode(this.sum)),
-      this.hash.toCBOR(),
-    ]);
-  }
-
-  public toJSON(): MerkleSumTreePathStepSiblingJson {
-    return [this.sum.toString(), this.hash.toJSON()];
-  }
-
-  public toString(): string {
-    return `MerkleSumTreePathStepSibling[${this.sum},${this.hash.toString()}]`;
-  }
-}
-
 type MerkleSumTreePathStepBranchJson = [string, string | null];
+
 class MerkleSumTreePathStepBranch {
   public constructor(
     public readonly sum: bigint,
@@ -92,7 +44,10 @@ class MerkleSumTreePathStepBranch {
   }
 
   public toCBOR(): Uint8Array {
-    return CborEncoder.encodeArray([CborEncoder.encodeOptional(this._value, CborEncoder.encodeByteString)]);
+    return CborEncoder.encodeArray([
+      CborEncoder.encodeByteString(BigintConverter.encode(this.sum)),
+      CborEncoder.encodeOptional(this._value, CborEncoder.encodeByteString),
+    ]);
   }
 
   public toJSON(): MerkleSumTreePathStepBranchJson {
@@ -106,26 +61,30 @@ class MerkleSumTreePathStepBranch {
 
 export interface IMerkleSumTreePathStepJson {
   readonly path: string;
-  readonly sibling: MerkleSumTreePathStepSiblingJson | null;
+  readonly sibling: MerkleSumTreePathStepBranchJson | null;
   readonly branch: MerkleSumTreePathStepBranchJson | null;
 }
 
 export class MerkleSumTreePathStep {
   private constructor(
     public readonly path: bigint,
-    public readonly sibling: MerkleSumTreePathStepSibling | null,
+    public readonly sibling: MerkleSumTreePathStepBranch | null,
     public readonly branch: MerkleSumTreePathStepBranch | null,
   ) {}
 
   public static createWithoutBranch(path: bigint, sibling: Branch | null): MerkleSumTreePathStep {
-    return new MerkleSumTreePathStep(path, sibling ? MerkleSumTreePathStepSibling.create(sibling) : null, null);
+    return new MerkleSumTreePathStep(
+      path,
+      sibling ? new MerkleSumTreePathStepBranch(sibling.sum, sibling.hash.imprint) : null,
+      null,
+    );
   }
 
   public static create(path: bigint, value: Branch | null, sibling: Branch | null): MerkleSumTreePathStep {
     if (value == null) {
       return new MerkleSumTreePathStep(
         path,
-        sibling ? MerkleSumTreePathStepSibling.create(sibling) : null,
+        sibling ? new MerkleSumTreePathStepBranch(sibling.sum, sibling.hash.imprint) : null,
         new MerkleSumTreePathStepBranch(0n, null),
       );
     }
@@ -133,14 +92,14 @@ export class MerkleSumTreePathStep {
     if (value instanceof LeafBranch) {
       return new MerkleSumTreePathStep(
         path,
-        sibling ? MerkleSumTreePathStepSibling.create(sibling) : null,
+        sibling ? new MerkleSumTreePathStepBranch(sibling.sum, sibling.hash.imprint) : null,
         new MerkleSumTreePathStepBranch(value.sum, value.value),
       );
     }
 
     return new MerkleSumTreePathStep(
       path,
-      sibling ? MerkleSumTreePathStepSibling.create(sibling) : null,
+      sibling ? new MerkleSumTreePathStepBranch(sibling.sum, sibling.hash.imprint) : null,
       new MerkleSumTreePathStepBranch(value.sum, value.childrenHash.data),
     );
   }
@@ -163,7 +122,7 @@ export class MerkleSumTreePathStep {
 
     return new MerkleSumTreePathStep(
       BigInt(data.path),
-      data.sibling != null ? MerkleSumTreePathStepSibling.fromJSON(data.sibling) : null,
+      data.sibling != null ? MerkleSumTreePathStepBranch.fromJSON(data.sibling) : null,
       data.branch != null ? MerkleSumTreePathStepBranch.fromJSON(data.branch) : null,
     );
   }
@@ -173,7 +132,7 @@ export class MerkleSumTreePathStep {
 
     return new MerkleSumTreePathStep(
       BigintConverter.decode(CborDecoder.readByteString(data[0])),
-      CborDecoder.readOptional(data[1], MerkleSumTreePathStepSibling.fromCBOR),
+      CborDecoder.readOptional(data[1], MerkleSumTreePathStepBranch.fromCBOR),
       CborDecoder.readOptional(data[2], MerkleSumTreePathStepBranch.fromCBOR),
     );
   }
