@@ -91,7 +91,7 @@ export class MerkleTreePath {
         currentPath = (currentPath << length) | (step.path & ((1n << length) - 1n));
       }
 
-      const siblingHash = step.sibling?.data ?? new Uint8Array(1);
+      const siblingHash = step.sibling?.value ?? new Uint8Array(1);
       const isRight = step.path & 1n;
       currentHash = await new DataHasher(HashAlgorithm.SHA256)
         .update(isRight ? siblingHash : hash)

@@ -28,14 +28,14 @@ describe('Sum-Certifying Tree', function () {
         0b1001n,
         {
           sum: 20n,
-          value: textEncoder.encode('left-2'),
+          value: textEncoder.encode('right-1'),
         },
       ],
       [
         0b1010n,
         {
           sum: 30n,
-          value: textEncoder.encode('right-1'),
+          value: textEncoder.encode('left-2'),
         },
       ],
       [
